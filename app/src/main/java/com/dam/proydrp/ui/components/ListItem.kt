@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import com.dam.proydrp.R
@@ -51,86 +52,93 @@ fun ListItem(
     onDelete: (UserProfile) -> Unit
 ) {
     val dimensions = LocalDimensions.current
-
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(dimensions.big))
-            .combinedClickable(
-                onClick = { onNavigate(userProfile) },
-                onLongClick = { onDelete(userProfile) }),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-    ) {
-        Row(
-            modifier = Modifier.padding(dimensions.large),
-            verticalAlignment = Alignment.CenterVertically
+    if(userProfile.accommodation != null)
+    {
+        Card(
+            modifier = modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(dimensions.big))
+                .combinedClickable(
+                    onClick = { onNavigate(userProfile) },
+                    onLongClick = { onDelete(userProfile) }),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
         ) {
-
-            PhotoItem(
-                url = userProfile.accommodationPicsUrls[0],
-                borderRadius = dimensions.large,
-                width = dimensions.giant,
-                height = dimensions.giant
-            )
-
-            Spacer(Modifier.width(dimensions.large))
-
-            Column(Modifier.weight(1f)) {
-                Text(
-                    text = userProfile.city,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 12.sp
-                )
-                Text(
-                    text = "${userProfile.name}, ${userProfile.surname}",
-                    color = MaterialTheme.colorScheme.secondary,
-                    lineHeight = 12.sp,
-                    modifier = Modifier.padding(bottom = dimensions.small)
-                )
-                Spacer(Modifier.height(dimensions.large))
-                Row {
-                    IconTextItem(R.drawable.house_icon, "${userProfile.squareMeters}m²")
-                    Spacer(Modifier.width(dimensions.large))
-                    IconTextItem(R.drawable.bed_icon, "${userProfile.bedrooms}")
-                    Spacer(Modifier.width(dimensions.large))
-                    IconTextItem(R.drawable.wc_icon, "${userProfile.bathrooms}")
-                }
-            }
-            Box(
-                modifier = Modifier
-                    .wrapContentSize(),
-                contentAlignment = Alignment.TopStart,
+            Row(
+                modifier = Modifier.padding(dimensions.large),
+                verticalAlignment = Alignment.CenterVertically
             ) {
+
+                PhotoItem(
+                    model = userProfile.accommodation.picsUrls[0],
+                    borderRadius = dimensions.large,
+                    width = dimensions.giant,
+                    height = dimensions.giant
+                )
+
+                Spacer(Modifier.width(dimensions.large))
+
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        text = userProfile.accommodation.city,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
+                        lineHeight = 12.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = "${userProfile.name}, ${userProfile.surname}",
+                        color = MaterialTheme.colorScheme.secondary,
+                        lineHeight = 12.sp,
+                        modifier = Modifier.padding(bottom = dimensions.small),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(Modifier.height(dimensions.large))
+                    Row {
+                        IconTextItem(R.drawable.house_icon, "${userProfile.accommodation.squareMeters}m²")
+                        Spacer(Modifier.width(dimensions.large))
+                        IconTextItem(R.drawable.bed_icon, "${userProfile.accommodation.bedrooms}")
+                        Spacer(Modifier.width(dimensions.large))
+                        IconTextItem(R.drawable.wc_icon, "${userProfile.accommodation.bathrooms}")
+                    }
+                }
+                Spacer(Modifier.width(dimensions.extraLarge))
                 Box(
                     modifier = Modifier
-                        .wrapContentSize()
-                        .clip(RoundedCornerShape(dimensions.standard))
-                        .background(MaterialTheme.colorScheme.primary)
-                        .clickable { onChatClick(userProfile) },
+                        .wrapContentSize(),
                     contentAlignment = Alignment.TopStart,
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.chat_icon),
-                        tint = MaterialTheme.colorScheme.background,
-                        contentDescription = stringResource(R.string.start_a_chat),
-                        modifier = Modifier
-                            .size(dimensions.huge)
-                            .padding(dimensions.standard)
-                    )
-                }
-
-                if (notification) {
                     Box(
-                        Modifier
-                            .size(dimensions.extraLarge)
-                            .align(Alignment.TopStart)
-                            .offset(x = -dimensions.small, y = -dimensions.small)
-                            .clip(CircleShape)
-                            .background(Color(0xFFA43535))
-                    )
+                        modifier = Modifier
+                            .wrapContentSize()
+                            .clip(RoundedCornerShape(dimensions.standard))
+                            .background(MaterialTheme.colorScheme.primary)
+                            .clickable { onChatClick(userProfile) },
+                        contentAlignment = Alignment.TopStart,
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.chat_icon),
+                            tint = MaterialTheme.colorScheme.background,
+                            contentDescription = stringResource(R.string.start_a_chat),
+                            modifier = Modifier
+                                .size(dimensions.huge)
+                                .padding(dimensions.standard)
+                        )
+                    }
+
+                    if (notification) {
+                        Box(
+                            Modifier
+                                .size(dimensions.extraLarge)
+                                .align(Alignment.TopStart)
+                                .offset(x = -dimensions.small, y = -dimensions.small)
+                                .clip(CircleShape)
+                                .background(Color(0xFFA43535))
+                        )
+                    }
                 }
             }
         }

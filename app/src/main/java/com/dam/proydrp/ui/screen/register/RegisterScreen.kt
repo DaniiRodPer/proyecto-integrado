@@ -29,6 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.dam.proydrp.R
+import com.dam.proydrp.data.model.UserProfile
 import com.dam.proydrp.ui.common.LocalDimensions
 import com.dam.proydrp.ui.common.TopBarConfig
 import com.dam.proydrp.ui.components.FloatingContainer
@@ -51,7 +52,8 @@ data class RegisterEvents(
 
 @Composable
 fun RegisterScreen(
-    onLogin: () -> Unit
+    onLogin: () -> Unit,
+    onNextStep: (UserProfile) -> Unit
 ) {
 
     val viewModel: RegisterViewModel = hiltViewModel()
@@ -63,7 +65,7 @@ fun RegisterScreen(
         onEmailConfirmChange = viewModel::onEmailConfirmChange,
         onPasswordChange = viewModel::onPasswordChange,
         onPasswordConfirmChange = viewModel::onPasswordConfirmChange,
-        onRegister = viewModel::onRegister,
+        onRegister = {viewModel.onRegister(onNextStep)},
         onLogin = onLogin
     )
 
@@ -142,46 +144,45 @@ fun RegisterContent(
                             label = stringResource(R.string.name),
                             icon = painterResource(id = R.drawable.profile_icon),
                             isError = state.nameIsError,
-                            errorText = state.nameError
+                            errorText = state.nameError?.let { stringResource(it) } ?: ""
                         )
-
                         TextField(
                             text = state.surname,
                             onChange = events.onSurnameChange,
                             label = stringResource(R.string.surname),
                             icon = painterResource(id = R.drawable.surname_icon),
                             isError = state.surnameIsError,
-                            errorText = state.surnameError
+                            errorText = state.surnameError?.let { stringResource(it) } ?: ""
                         )
-
                         TextField(
                             text = state.email,
                             onChange = events.onEmailChange,
                             label = stringResource(R.string.email_address),
                             icon = painterResource(id = R.drawable.email_icon),
                             isError = state.emailIsError,
-                            errorText = state.emailError,
+                            errorText = state.emailError?.let { stringResource(it) } ?: "",
                             keyboardType = KeyboardType.Email
                         )
-
                         TextField(
                             text = state.emailConfirm,
                             onChange = events.onEmailConfirmChange,
                             label = stringResource(R.string.confirm_email_address),
                             icon = painterResource(id = R.drawable.email_icon),
                             isError = state.emailConfirmIsError,
-                            errorText = state.emailConfirmError,
+                            errorText = state.emailConfirmError?.let { stringResource(it) } ?: "",
                             keyboardType = KeyboardType.Email
                         )
                         PasswordField(
-                            state.password, events.onPasswordChange,
+                            state.password,
+                            events.onPasswordChange,
                             isError = state.passwordIsError,
-                            errorText = state.passwordError
+                            errorText = state.passwordError?.let { stringResource(it) } ?: ""
                         )
                         PasswordField(
-                            state.passwordConfirm, events.onPasswordConfirmChange,
+                            state.passwordConfirm,
+                            events.onPasswordConfirmChange,
                             isError = state.passwordConfirmIsError,
-                            errorText = state.passwordConfirmError
+                            errorText = state.passwordConfirmError?.let { stringResource(it) } ?: ""
                         )
                     }
 

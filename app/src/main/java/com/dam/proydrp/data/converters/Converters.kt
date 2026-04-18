@@ -1,6 +1,7 @@
 package com.dam.proydrp.data.converters
 
 import androidx.room.TypeConverter
+import com.dam.proydrp.data.model.Accommodation
 import com.dam.proydrp.data.model.AccommodationTag
 import com.dam.proydrp.data.model.UserTag
 import kotlinx.serialization.encodeToString
@@ -47,5 +48,15 @@ class Converters {
     @TypeConverter
     fun toLocalDate(dateString: String?): LocalDate? {
         return dateString?.let { LocalDate.parse(it) }
+    }
+
+    @TypeConverter
+    fun fromAccommodation(accommodation: Accommodation?): String? {
+        return accommodation?.let { Json.encodeToString(it) }
+    }
+
+    @TypeConverter
+    fun toAccommodation(data: String?): Accommodation? {
+        return data?.let { Json.decodeFromString(it) }
     }
 }

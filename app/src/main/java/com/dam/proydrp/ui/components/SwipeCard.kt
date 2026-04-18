@@ -46,18 +46,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.dam.proydrp.R
 import com.dam.proydrp.data.mock.mockUserProfileList
 import com.dam.proydrp.data.model.UserProfile
 import com.dam.proydrp.ui.common.LocalDimensions
 import com.dam.proydrp.ui.components.images.ProfilePic
 import com.dam.proydrp.ui.components.images.TapGallery
+import com.dam.proydrp.ui.components.text.Title
 import com.dam.proydrp.ui.theme.ProydrpTheme
 import com.dam.proydrp.ui.utils.getUserTagLabel
 import com.dam.proydrp.ui.utils.swipeableCard
@@ -67,6 +70,7 @@ import kotlin.math.abs
 fun SwipeCard(
     userProfile: UserProfile,
     onSwipe: (Boolean) -> Unit,
+    onCardClick: () -> Unit,
     onButtonPress: (Boolean) -> Unit,
     showButtons: Boolean = true,
     triggerSwipeLeft: Boolean = false,
@@ -115,65 +119,92 @@ fun SwipeCard(
                         .fillMaxSize()
                         .padding(bottom = buttonsSize / 2)
                 ) {
-                    val scrollState = rememberScrollState()
-
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(bottom = buttonsSize / 2 + dimensions.standard)
-                            .verticalScroll(scrollState)
-                            .padding(
-                                start = dimensions.standard,
-                                end = dimensions.standard,
-                                top = dimensions.standard
-                            ),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-
-                        Box(modifier = Modifier.fillMaxSize()) {
-                            TapGallery(
-                                urls = userProfile.accommodationPicsUrls,
-                                city = userProfile.city,
-                            )
-                        }
-
-
-                        Text(
-                            userProfile.accommodationDescription,
-                            maxLines = dynamicMaxLines,
-                            lineHeight = 16.sp,
-                            overflow = TextOverflow.Ellipsis,
-                            style = TextStyle(fontSize = 14.sp, textAlign = TextAlign.Center),
+                    if (userProfile.accommodation != null) {
+                        val scrollState = rememberScrollState()
+                        Column(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = dimensions.standard),
-                        )
-
-                        TagList(
-                            userProfile.squareMeters, userProfile.bedrooms, userProfile.bathrooms,
-                            modifier = Modifier.padding(vertical = dimensions.standard)
-                        )
-
-                        HorizontalDivider(thickness = dimensions.tiny)
-
-                        Row(
-                            horizontalArrangement = Arrangement.Start,
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = dimensions.standard)
+                                .fillMaxSize()
+                                .padding(bottom = buttonsSize / 2 + dimensions.standard)
+                                .verticalScroll(scrollState)
+                                .padding(
+                                    start = dimensions.standard,
+                                    end = dimensions.standard,
+                                    top = dimensions.standard
+                                ),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            ProfilePic(userProfile.profilePicUrl, dimensions.extraBig)
+                            Box(modifier = Modifier.fillMaxSize()) {
+                                TapGallery(
+                                    urls = userProfile.accommodation.picsUrls,
+                                    city = userProfile.accommodation.city,
+                                )
+                            }
+
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(dimensions.standard))
+                                    .clickable { onCardClick() }
+                            ) {
+                                Text(
+                                    userProfile.accommodation.description,
+                                    maxLines = dynamicMaxLines,
+                                    lineHeight = 16.sp,
+                                    overflow = TextOverflow.Ellipsis,
+                                    style = TextStyle(
+                                        fontSize = 14.sp,
+                                        textAlign = TextAlign.Center
+                                    ),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = dimensions.standard),
+                                )
+
+                                TagList(
+                                    userProfile.accommodation.squareMeters,
+                                    userProfile.accommodation.bedrooms,
+                                    userProfile.accommodation.bathrooms,
+                                    modifier = Modifier.padding(vertical = dimensions.standard)
+                                )
+
+                                HorizontalDivider(thickness = dimensions.tiny)
+
+                                Row(
+                                    horizontalArrangement = Arrangement.Start,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = dimensions.standard)
+                                ) {
+                                    ProfilePic(userProfile.profilePicUrl, dimensions.extraBig)
+                                    Text(
+                                        "${userProfile.name} ${userProfile.surname[0]}, ${userProfile.age}  |  $userTags",
+                                        fontSize = 14.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.padding(start = dimensions.standard)
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.error_icon),
+                                contentDescription = stringResource(R.string.user_load_error),
+                                modifier = Modifier.size(dimensions.huge)
+                            )
                             Text(
-                                "${userProfile.name} ${userProfile.surname[0]}, ${userProfile.age}  |  $userTags",
-                                fontSize = 14.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.padding(start = dimensions.standard)
+                                text = stringResource(R.string.user_load_error),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(top = dimensions.standard)
                             )
                         }
                     }
-
                     val startThreshold = 0.1f
                     val rawSwipeIntensity = abs(localSwipeProgress)
 
@@ -215,8 +246,6 @@ fun SwipeCard(
                         )
                     }
                 }
-
-
                 AnimatedVisibility(
                     visible = showButtons,
                     modifier = Modifier.align(Alignment.BottomCenter),
@@ -270,7 +299,7 @@ fun SwipeCard(
 @Preview
 @Composable
 fun SwipeCardPreview() {
-    val user = mockUserProfileList[0]
+    val user = mockUserProfileList[15]
 
     ProydrpTheme {
         Surface(
@@ -278,7 +307,7 @@ fun SwipeCardPreview() {
         ) {
             val dimensions = LocalDimensions.current
             Column {
-                SwipeCard(user, {}, {})
+                SwipeCard(user, {}, {}, {})
             }
 
         }

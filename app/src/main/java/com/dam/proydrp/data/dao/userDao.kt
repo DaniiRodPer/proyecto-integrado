@@ -10,20 +10,18 @@ import com.dam.proydrp.data.model.UserProfile
 @Dao
 interface UserDao {
 
-    //Insert
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUser(user: UserProfile)
 
-
-    //update
     @Update
     suspend fun updateUser(user: UserProfile)
 
+    @Query("SELECT * FROM user_profile WHERE id = :userId")
+    suspend fun getUserById(userId: String): UserProfile?
 
-    //querys
+    @Query("SELECT * FROM user_profile")
+    suspend fun getAllUsers(): List<UserProfile>
 
-
-    //delete
     @Query("DELETE FROM user_profile WHERE id = :userId")
     suspend fun deleteUser(userId: String)
 }

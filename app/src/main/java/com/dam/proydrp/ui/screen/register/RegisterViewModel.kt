@@ -4,8 +4,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.dam.proydrp.R
+import com.dam.proydrp.data.model.UserProfile
+import com.dam.proydrp.data.network.BaseResult
 import com.dam.proydrp.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -15,9 +20,42 @@ class RegisterViewModel @Inject constructor(
     var state by mutableStateOf(RegisterState())
         private set
 
-    fun onRegister() {
-        if (validateFields()) {
+    fun onRegister(onSuccess: (UserProfile) -> Unit) {
+        viewModelScope.launch {
+            val localValid = validateFields()
+            if (!localValid) return@launch
 
+            state = state.copy(isLoading = true)
+
+            when (val result = userRepository.isEmailAvailable(state.email)) {
+                is BaseResult.Success -> {
+                    val isAvailable = result.data
+                    if (isAvailable) {
+                        val partialUser = UserProfile(
+                            name = state.name,
+                            surname = state.surname,
+                            email = state.email,
+                        ).apply {
+                            password = state.password
+                        }
+                        onSuccess(partialUser)
+                    } else {
+                        state = state.copy(
+                            emailIsError = true,
+                            emailError = R.string.error_email_already_registered,
+                            isLoading = false
+                        )
+                    }
+                }
+
+                is BaseResult.Error -> {
+                    state = state.copy(
+                        emailIsError = true,
+                        emailError = R.string.error_server_connection,
+                        isLoading = false
+                    )
+                }
+            }
         }
     }
 
@@ -26,7 +64,9 @@ class RegisterViewModel @Inject constructor(
         val passwordPattern = "^(?=.*[A-Z])(?=.*[0-9])(?=.*[@#$%^&+=!._-]).{12,}$"
 
         val isNameEmpty = state.name.isBlank()
+        val isNameTooLong = state.name.length > 50
         val isSurnameEmpty = state.surname.isBlank()
+        val isSurnameTooLong = state.surname.length > 50
         val isEmailEmpty = state.email.isBlank()
         val isEmailConfirmEmpty = state.emailConfirm.isBlank()
         val isPasswordEmpty = state.password.isBlank()
@@ -35,46 +75,55 @@ class RegisterViewModel @Inject constructor(
         val isEmailValid = state.email.matches(emailPattern.toRegex())
         val isEmailMatch = state.email == state.emailConfirm
 
+
         val isPasswordValid = state.password.matches(passwordPattern.toRegex())
         val isPasswordMatch = state.password == state.passwordConfirm
 
         state = state.copy(
-            nameIsError = isNameEmpty,
-            nameError = if (isNameEmpty) "El nombre es obligatorio" else "",
+            nameIsError = isNameEmpty || isNameTooLong,
+            nameError = when {
+                isNameEmpty -> R.string.error_name_required
+                isNameTooLong -> R.string.error_name_too_long
+                else -> null
+            },
 
-            surnameIsError = isSurnameEmpty,
-            surnameError = if (isSurnameEmpty) "El apellido es obligatorio" else "",
+            surnameIsError = isSurnameEmpty || isSurnameTooLong,
+            surnameError = when {
+                isSurnameEmpty -> R.string.error_surname_required
+                isSurnameTooLong -> R.string.error_surname_too_long
+                else -> null
+            },
 
             emailIsError = isEmailEmpty || !isEmailValid,
             emailError = when {
-                isEmailEmpty -> "El correo es obligatorio"
-                !isEmailValid -> "Formato de email inválido"
-                else -> ""
+                isEmailEmpty -> R.string.error_email_required
+                !isEmailValid -> R.string.error_email_invalid
+                else -> null
             },
 
             emailConfirmIsError = isEmailConfirmEmpty || !isEmailMatch,
             emailConfirmError = when {
-                isEmailConfirmEmpty -> "Debes confirmar el correo"
-                !isEmailMatch -> "Los correos no coinciden"
-                else -> ""
+                isEmailConfirmEmpty -> R.string.error_email_confirm_required
+                !isEmailMatch -> R.string.error_emails_do_not_match
+                else -> null
             },
 
             passwordIsError = isPasswordEmpty || !isPasswordValid,
             passwordError = when {
-                isPasswordEmpty -> "La contraseña es obligatoria"
-                !isPasswordValid -> "Mínimo 12 caracteres, mayúscula, número y símbolo"
-                else -> ""
+                isPasswordEmpty -> R.string.error_password_required
+                !isPasswordValid -> R.string.error_password_invalid
+                else -> null
             },
 
             passwordConfirmIsError = isPasswordConfirmEmpty || !isPasswordMatch,
             passwordConfirmError = when {
-                isPasswordConfirmEmpty -> "Debes confirmar la contraseña"
-                !isPasswordMatch -> "Las contraseñas no coinciden"
-                else -> ""
+                isPasswordConfirmEmpty -> R.string.error_password_confirm_required
+                !isPasswordMatch -> R.string.error_passwords_do_not_match
+                else -> null
             }
         )
 
-        return !isNameEmpty && !isSurnameEmpty && isEmailValid && isEmailMatch && isPasswordValid && isPasswordMatch
+        return !isNameEmpty && !isSurnameEmpty && !isNameTooLong && !isSurnameTooLong && isEmailValid && isEmailMatch && isPasswordValid && isPasswordMatch
     }
 
     fun onNameChange(newVal: String) {

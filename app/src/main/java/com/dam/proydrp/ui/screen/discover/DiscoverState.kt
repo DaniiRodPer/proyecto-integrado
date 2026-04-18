@@ -11,5 +11,7 @@ sealed class DiscoverState {
         val isSwipeLoading: Boolean = false,
         val swipeRightTrigger: Boolean = false,
         val swipeLeftTrigger: Boolean = false,
+        val matchUser: UserProfile? = null,
+        val showMatchAnimation: Boolean = false
     ): DiscoverState()
 }

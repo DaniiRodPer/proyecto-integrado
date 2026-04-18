@@ -46,10 +46,11 @@ fun DatePickerField(
     modifier: Modifier = Modifier,
     intervalRestric: Boolean = true,
     icon: Painter? = null,
-    defaultShowModal: Boolean = true
+    defaultShowModal: Boolean = true,
+    isError: Boolean = false,
+    errorText: String = ""
 ) {
     val dimensions = LocalDimensions.current
-
     var showModal by remember { mutableStateOf(defaultShowModal) }
 
     val minDate = remember {
@@ -59,8 +60,8 @@ fun DatePickerField(
         localDateToMilis(LocalDate.now().minusYears(18))!!
     }
     val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = localDateToMilis(selectedDate) ?: System.currentTimeMillis(),
-
+        initialSelectedDateMillis = localDateToMilis(selectedDate),
+        initialDisplayedMonthMillis = localDateToMilis(selectedDate) ?: maxDate,
         selectableDates = if (intervalRestric) {
             object : SelectableDates {
                 override fun isSelectableDate(utcTimeMillis: Long): Boolean {
@@ -98,11 +99,13 @@ fun DatePickerField(
     Column(modifier = modifier.fillMaxWidth()) {
         Box(modifier = Modifier.fillMaxWidth()) {
             TextField(
-                text = localDateToString(selectedDate),
+                text = selectedDate?.let { localDateToString(it) } ?: "",
                 onChange = {},
-                label = label,
                 icon = icon,
-                readOnly = true
+                readOnly = true,
+                isError = isError,
+                errorText = errorText,
+                label = stringResource(R.string.select_date_placeholder)
             )
             Box(
                 modifier = Modifier

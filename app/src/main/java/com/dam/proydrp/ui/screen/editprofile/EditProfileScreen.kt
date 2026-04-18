@@ -1,7 +1,11 @@
 package com.dam.proydrp.ui.screen.editprofile
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -18,12 +23,19 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -34,24 +46,31 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.dam.proydrp.R
 import com.dam.proydrp.data.model.AccommodationTag
 import com.dam.proydrp.data.model.SUPPORTED_CITIES
+import com.dam.proydrp.data.model.UserProfile
 import com.dam.proydrp.data.model.UserTag
 import com.dam.proydrp.ui.common.LocalDimensions
 import com.dam.proydrp.ui.components.AnimationComponent
+import com.dam.proydrp.ui.components.CustomAlertDialog
 import com.dam.proydrp.ui.components.FloatingContainer
 import com.dam.proydrp.ui.components.buttons.PrimaryButton
 import com.dam.proydrp.ui.components.images.HorizontalPhotoSelector
+import com.dam.proydrp.ui.components.images.ProfilePic
 import com.dam.proydrp.ui.components.pickers.CheckBoxField
 import com.dam.proydrp.ui.components.pickers.DatePickerField
 import com.dam.proydrp.ui.components.pickers.DropdownContainer
 import com.dam.proydrp.ui.components.pickers.NumberStepField
 import com.dam.proydrp.ui.components.text.TextField
 import com.dam.proydrp.ui.components.text.Title
+import com.dam.proydrp.ui.home.DialogConfig
+import com.dam.proydrp.ui.home.Routes
 import com.dam.proydrp.ui.screen.profile.ProfileContent
 import com.dam.proydrp.ui.screen.profile.ProfileState
 import com.dam.proydrp.ui.theme.ProydrpTheme
 import com.dam.proydrp.ui.utils.getAccommodationTagIcon
 import com.dam.proydrp.ui.utils.getAccommodationTagLabel
 import com.dam.proydrp.ui.utils.getUserTagLabel
+import com.dam.proydrp.ui.utils.uriToFile
+import java.io.File
 import java.time.LocalDate
 
 data class EditProfileEvents(
@@ -64,16 +83,60 @@ data class EditProfileEvents(
     val onSquareMetersChange: (String) -> Unit,
     val onAccommodationTagChanged: (AccommodationTag) -> Unit,
     val onUserTagChanged: (UserTag) -> Unit,
+    val onAddAccommodationPhoto: (File) -> Unit,
+    val onDeleteAccommodationPhoto: (Any) -> Unit,
+    val onProfilePhotoChanged: (File) -> Unit,
     val onGoToBack: () -> Unit
 )
 
 @Composable
 fun EditProfileScreen(
-    onGoToBack: () -> Unit
+    userData: UserProfile? = null,
+    isRegisterMode: Boolean = false,
+    onGoToBack: () -> Unit,
+    onRegisterSuccess: () -> Unit = {}
 ) {
 
     val viewModel: EditProfileViewModel = hiltViewModel()
+
+    LaunchedEffect(userData, isRegisterMode) {
+        viewModel.start(userData, isRegisterMode)
+    }
+
     val currentState: EditProfileState = viewModel.state
+    val successState = currentState as? EditProfileState.Success
+    val context = LocalContext.current
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 12),
+        onResult = { uris ->
+            if (successState != null) {
+                val currentCount =
+                    currentState.accommodationPicsUrls.count { it !in successState.pendingDeletions } + successState.pendingUploads.size
+
+                val slotsLeft = 12 - currentCount
+
+                uris.take(slotsLeft).forEach { uri ->
+                    val file = uriToFile(context, uri)
+                    if (file != null) {
+                        viewModel.onAddAccommodationPhoto(file)
+                    }
+                }
+            }
+        }
+    )
+
+    val profilePhotoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri ->
+            uri?.let {
+                val file = uriToFile(context, it)
+                if (file != null) {
+                    viewModel.onProfilePhotoChanged(file)
+                }
+            }
+        }
+    )
 
     val events = EditProfileEvents(
         onBirthDateChange = viewModel::onBirthDayChange,
@@ -85,6 +148,9 @@ fun EditProfileScreen(
         onSquareMetersChange = viewModel::onSquareMetersChange,
         onAccommodationTagChanged = viewModel::onAccommodationTagChange,
         onUserTagChanged = viewModel::onUserTagChange,
+        onAddAccommodationPhoto = viewModel::onAddAccommodationPhoto,
+        onDeleteAccommodationPhoto = viewModel::onDeleteAccommodationPhoto,
+        onProfilePhotoChanged = viewModel::onProfilePhotoChanged,
         onGoToBack = onGoToBack
     )
 
@@ -106,22 +172,51 @@ fun EditProfileScreen(
 
         is EditProfileState.Success -> {
             EditProfileContent(
-                state = viewModel.state,
-                events = events
+                state = currentState,
+                events = events,
+                isRegisterMode = isRegisterMode,
+                onSave = {
+                    viewModel.onSave {
+                        if (isRegisterMode) {
+                            onRegisterSuccess()
+                        } else {
+                            onGoToBack()
+                        }
+                    }
+                },
+                onAddPhotoClick = {
+                    photoPickerLauncher.launch(
+                        PickVisualMediaRequest(
+                            mediaType = ActivityResultContracts.PickVisualMedia.ImageOnly,
+                        )
+                    )
+                },
+                onProfilePhotoClick = {
+                    profilePhotoPickerLauncher.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    )
+                }
             )
         }
     }
 }
 
+
 @Composable
 fun EditProfileContent(
     state: EditProfileState,
     events: EditProfileEvents,
+    isRegisterMode: Boolean,
+    onAddPhotoClick: () -> Unit,
+    onProfilePhotoClick: () -> Unit,
+    onSave: () -> Unit
 ) {
     val state = state as EditProfileState.Success
 
     val canAddMoreTags = state.accommodationTags.size < 9
     val dimensions = LocalDimensions.current
+    var activeDialog by remember { mutableStateOf<DialogConfig?>(null) }
+    var itemToDelete by remember { mutableStateOf<Any?>(null) }
 
     Column(
         Modifier
@@ -130,33 +225,27 @@ fun EditProfileContent(
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
             modifier = Modifier
-                .padding(vertical = dimensions.big)
-        ) {
-            Box(
-                modifier = Modifier
-                    .height(dimensions.huge)
-                    .width(dimensions.huge)
-                    .clip(RoundedCornerShape(dimensions.giant))
-                    .border(
-                        width = dimensions.tiny * 2,
-                        color = Color.White,
-                        shape = CircleShape
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.profile_pic_test),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    contentScale = ContentScale.Crop
+                .fillMaxWidth()
+                .padding(
+                    vertical = dimensions.big,
+                    horizontal = dimensions.large
                 )
-            }
+        ) {
+            val profilePicModel = state.pendingProfilePicUpload ?: state.userPicUrl.takeIf { it.isNotBlank() }
+
+            ProfilePic(
+                model = profilePicModel,
+                size = dimensions.extraHuge,
+                clickable = true,
+                onClick = onProfilePhotoClick
+            )
             Spacer(Modifier.width(dimensions.extraLarge))
             Title(
-                "María Pérez",
+                text = "${state.name} ${state.surname}",
                 fontSize = 48.sp,
+                modifier = Modifier.weight(1f, fill = false)
             )
         }
 
@@ -179,7 +268,9 @@ fun EditProfileContent(
                         selectedDate = state.birthDate,
                         onDateSelected = { events.onBirthDateChange(it) },
                         icon = painterResource(R.drawable.calendar_icon),
-                        defaultShowModal = false
+                        defaultShowModal = false,
+                        isError = state.birthDateIsError,
+                        errorText = state.birthDateError?.let { stringResource(it) } ?: ""
                     )
                     DropdownContainer(
                         label = stringResource(R.string.city),
@@ -188,7 +279,9 @@ fun EditProfileContent(
                         onOptionClick = { events.onCityChange(it as String) },
                         optionLabel = { it as String },
                         isMultiSelect = false,
-                        leadingIcon = painterResource(R.drawable.location_icon)
+                        leadingIcon = painterResource(R.drawable.location_icon),
+                        isError = state.cityIsError,
+                        errorText = state.cityError?.let { stringResource(it) } ?: ""
                     )
                     DropdownContainer(
                         label = stringResource(R.string.user_tags_title),
@@ -198,19 +291,26 @@ fun EditProfileContent(
                         optionLabel = { tag -> getUserTagLabel(tag as UserTag) },
                         isMultiSelect = true,
                         maxSelection = 3,
-                        leadingIcon = painterResource(R.drawable.label_icon)
+                        leadingIcon = painterResource(R.drawable.label_icon),
+                        isError = state.userTagsIsError,
+                        errorText = state.userTagsError?.let { stringResource(it) } ?: ""
                     )
                     TextField(
                         text = state.userDescription,
                         onChange = events.onUserDescriptionChange,
                         label = stringResource(R.string.description),
-                        singleLine = false
+                        singleLine = false,
+                        isError = state.userDescriptionIsError,
+                        errorText = state.userDescriptionError?.let { stringResource(it) } ?: ""
                     )
                     TextField(
                         text = state.accommodationDescription,
                         onChange = events.onAccommodationDescriptionChange,
                         label = stringResource(R.string.accommodationdescription),
-                        singleLine = false
+                        singleLine = false,
+                        isError = state.accommodationDescriptionIsError,
+                        errorText = state.accommodationDescriptionError?.let { stringResource(it) }
+                            ?: ""
                     )
                     HorizontalDivider(
                         thickness = dimensions.tiny,
@@ -219,11 +319,40 @@ fun EditProfileContent(
                             bottom = dimensions.standard
                         )
                     )
+                    val displayPhotos =
+                        state.accommodationPicsUrls.filter { it !in state.pendingDeletions } + state.pendingUploads
                     HorizontalPhotoSelector(
-                        listOf("", "", "", ""),
-                        {},
-                        Modifier.padding(bottom = dimensions.standard)
+                        items = displayPhotos,
+                        onAddPhotoClick = onAddPhotoClick,
+                        onDeletePhotoClick = { item ->
+                            itemToDelete = item
+                            activeDialog = DialogConfig(
+                                title = R.string.delete_image_desc,
+                                body = R.string.delete_image_question,
+                                primaryButtonText = R.string.delete,
+                                secondaryButtonText = R.string.cancel,
+                                icon = R.drawable.logout_icon,
+                                mode = true,
+                                onConfirm = {
+                                    itemToDelete?.let { events.onDeleteAccommodationPhoto(it) }
+                                    activeDialog = null
+                                },
+                                onDismiss = { activeDialog = null }
+                            )
+                        },
+                        modifier = Modifier.padding(bottom = dimensions.standard)
                     )
+                    if (state.accommodationPicsIsError) {
+                        Text(
+                            text = state.accommodationPicsError?.let { stringResource(it) } ?: "",
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(
+                                bottom = dimensions.small,
+                                start = dimensions.large
+                            )
+                        )
+                    }
                     HorizontalDivider(
                         thickness = dimensions.tiny,
                         modifier = Modifier.padding(
@@ -234,7 +363,7 @@ fun EditProfileContent(
                     NumberStepField(
                         label = stringResource(R.string.bedrooms),
                         icon = R.drawable.bed_icon,
-                        value = state.rooms,
+                        value = state.bedrooms,
                         onValueChange = events.onRoomsChange
                     )
                     NumberStepField(
@@ -250,7 +379,9 @@ fun EditProfileContent(
                         label = stringResource(R.string.square_meters_title),
                         singleLine = true,
                         trailingText = stringResource(R.string.square_meters),
-                        keyboardType = KeyboardType.Number
+                        keyboardType = KeyboardType.Number,
+                        isError = state.squareMetersIsError,
+                        errorText = state.squareMetersError?.let { stringResource(it) } ?: ""
                     )
                     HorizontalDivider(
                         thickness = dimensions.tiny,
@@ -259,6 +390,17 @@ fun EditProfileContent(
                             bottom = dimensions.standard
                         )
                     )
+                    if (state.accommodationTagsIsError) {
+                        Text(
+                            text = state.accommodationTagsError?.let { stringResource(it) } ?: "",
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(
+                                bottom = dimensions.small,
+                                start = dimensions.small
+                            )
+                        )
+                    }
                     AccommodationTag.entries.forEach { tag ->
                         val isSelected = state.accommodationTags.contains(tag)
 
@@ -276,11 +418,29 @@ fun EditProfileContent(
             }
         }
         PrimaryButton(
-            text = stringResource(R.string.save),
-            onClick = {},
-            modifier = Modifier.padding(top = dimensions.standard).fillMaxWidth(0.9f),
+            text = stringResource(
+                if (isRegisterMode) R.string.register else R.string.save
+            ),
+            onClick = onSave,
+            enabled = !state.isSaving,
+            modifier = Modifier
+                .padding(top = dimensions.standard)
+                .fillMaxWidth(0.9f),
             textPadding = dimensions.small,
         )
+
+        activeDialog?.let { config ->
+            CustomAlertDialog(
+                title = config.title,
+                body = config.body,
+                primaryButtonText = config.primaryButtonText,
+                secondaryButtonText = config.secondaryButtonText,
+                icon = config.icon,
+                mode = config.mode,
+                onDismiss = config.onDismiss,
+                onConfirm = config.onConfirm
+            )
+        }
     }
 }
 
@@ -292,11 +452,18 @@ fun EditProfilePreview() {
         Surface(
             color = MaterialTheme.colorScheme.background
         ) {
-            val state = EditProfileState.Success()
+            val state = EditProfileState.Success(name = "María del carmen Rodriguez Mérida")
             val events = EditProfileEvents(
-                {}, {}, {}, {}, {}, {}, {}, {}, {}, {}
+                {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}
             )
-            EditProfileContent(state = state, events = events)
+            EditProfileContent(
+                state = state,
+                events = events,
+                onSave = {},
+                onAddPhotoClick = {},
+                onProfilePhotoClick = {},
+                isRegisterMode = false
+            )
         }
     }
 }

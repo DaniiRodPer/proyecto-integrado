@@ -1,10 +1,14 @@
 package com.dam.proydrp.ui.screen.discover
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -19,46 +23,90 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.dam.proydrp.R
 import com.dam.proydrp.data.mock.mockUserProfileList
 import com.dam.proydrp.ui.common.LocalDimensions
 import com.dam.proydrp.ui.components.AnimationComponent
+import com.dam.proydrp.ui.components.ListItem
 import com.dam.proydrp.ui.theme.ProydrpTheme
 import com.dam.proydrp.ui.components.SwipeCard
+import com.dam.proydrp.ui.components.buttons.ReloadButton
+import com.dam.proydrp.ui.home.Routes
 import kotlin.math.abs
 
 data class DiscoverEvents(
     val onSwipe: (Boolean) -> Unit,
-    val onButtonPress: (Boolean) -> Unit
+    val onButtonPress: (Boolean) -> Unit,
+    val onUpdate: () -> Unit,
+    val onCardClick: (String) -> Unit
 )
 
 @Composable
 fun DiscoverScreen(
     scaffoldPadding: PaddingValues,
+    onNavigateToProfile: (String) -> Unit,
+    filterCity: String?,
+    filterRooms: Int?,
+    filterBathrooms: Int?
 ) {
     val viewModel: DiscoverViewModel = hiltViewModel()
     val currentState: DiscoverState = viewModel.state
+    val dimensions = LocalDimensions.current
 
     val events = DiscoverEvents(
         onSwipe = viewModel::onSwipe,
-        onButtonPress = viewModel::onButtonPressed
+        onButtonPress = viewModel::onButtonPressed,
+        onUpdate = {
+            val cityToPass = if (filterCity.isNullOrEmpty()) null else filterCity
+            viewModel.verifySessionAndLoad(cityToPass, filterRooms, filterBathrooms)
+        },
+        onCardClick = onNavigateToProfile
     )
+
+    LaunchedEffect(filterCity, filterRooms, filterBathrooms) {
+        val cityToPass = if (filterCity.isNullOrEmpty()) null else filterCity
+        viewModel.verifySessionAndLoad(cityToPass, filterRooms, filterBathrooms)
+    }
 
     when (currentState) {
         DiscoverState.Loading -> {
-            AnimationComponent(
-                lottie = LottieCompositionSpec.RawRes(R.raw.loading_animation),
-                text = stringResource(R.string.loading)
-            )
+            Box(
+                modifier = Modifier.size(dimensions.extraGiant * 2),
+                contentAlignment = Alignment.Center
+            ) {
+                AnimationComponent(
+                    lottie = LottieCompositionSpec.RawRes(R.raw.loading_animation),
+                    text = stringResource(R.string.loading)
+                )
+            }
         }
 
         DiscoverState.NoData -> {
-            AnimationComponent(
-                lottie = LottieCompositionSpec.RawRes(R.raw.swipes_animation),
-                text = stringResource(R.string.no_swipes)
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(scaffoldPadding)
+                    .padding(horizontal = dimensions.large, vertical = dimensions.standard),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AnimationComponent(
+                        lottie = LottieCompositionSpec.RawRes(R.raw.swipes_animation),
+                        text = stringResource(R.string.no_swipes)
+                    )
+
+                }
+                ReloadButton(
+                    onClick = { events.onUpdate() },
+                )
+            }
         }
 
         is DiscoverState.Success -> {
@@ -94,10 +142,49 @@ fun DiscoverContent(
         contentAlignment = Alignment.TopCenter,
     ) {
         if (state.cards.isEmpty()) {
-            AnimationComponent(
-                lottie = LottieCompositionSpec.RawRes(R.raw.swipes_animation),
-                text = stringResource(R.string.no_swipes)
-            )
+            Column(modifier = Modifier.fillMaxSize()) {
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    AnimationComponent(
+                        lottie = LottieCompositionSpec.RawRes(R.raw.swipes_animation),
+                        text = stringResource(R.string.no_swipes),
+                    )
+                }
+                ReloadButton({ events.onUpdate() })
+            }
+        } else if (state.showMatchAnimation && state.matchUser != null) {
+            Column(
+                Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Top
+            ) {
+                Spacer(modifier = Modifier.weight(0.3f))
+                Box(
+                    modifier = Modifier.size(dimensions.extraGiant * 3),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AnimationComponent(
+                        lottie = LottieCompositionSpec.RawRes(R.raw.match_animation),
+                        text = stringResource(R.string.match_desc),
+                        animationSize = dimensions.extraGiant * 2,
+                        fontSize = 42.sp
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = dimensions.large),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ListItem(
+                        userProfile = state.matchUser,
+                        notification = false,
+                        onChatClick = {},
+                        onNavigate = { events.onCardClick(state.matchUser.id) },
+                        onDelete = {}
+                    )
+                }
+                Spacer(modifier = Modifier.weight(1.7f))
+            }
         } else {
             Column {
                 Box(
@@ -122,6 +209,7 @@ fun DiscoverContent(
                                 SwipeCard(
                                     userProfile = user,
                                     onSwipe = events.onSwipe,
+                                    onCardClick = { events.onCardClick(user.id) },
                                     onButtonPress = events.onButtonPress,
                                     showButtons = isTopCard,
                                     triggerSwipeLeft = if (isTopCard) state.swipeLeftTrigger else false,
@@ -154,7 +242,30 @@ fun DiscoverScreenPreview() {
             DiscoverContent(
                 scaffoldPadding = PaddingValues(),
                 state = state,
-                events = DiscoverEvents({}, {})
+                events = DiscoverEvents({}, {}, {}, {})
+            )
+        }
+    }
+}
+
+@Preview(showSystemUi = true, name = "Match Screen")
+@Composable
+fun DiscoverScreenMatchPreview() {
+    ProydrpTheme {
+        val mockUser = mockUserProfileList.firstOrNull()
+
+        val state = DiscoverState.Success(
+            cards = mockUserProfileList,
+            currentCard = mockUser,
+            showMatchAnimation = true,
+            matchUser = mockUser
+        )
+
+        Surface(color = MaterialTheme.colorScheme.background) {
+            DiscoverContent(
+                scaffoldPadding = PaddingValues(),
+                state = state,
+                events = DiscoverEvents({}, {}, {}, {})
             )
         }
     }

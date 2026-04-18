@@ -59,8 +59,9 @@ fun LoginScreen(
     val events = LoginEvents(
         onEmailChange = viewModel::onEmailChange,
         onPasswodChange = viewModel::onPasswordChange,
-        onLogin = onLogin, //Cambiar por la línea de abajo y quitar parámtro tras terminar de depurar
-        //onLogin = viewModel::onLogin,
+        onLogin = {
+            viewModel.onLogin(onSuccess = onLogin)
+        },
         onRegister = onRegister,
     )
 
@@ -108,7 +109,7 @@ fun LoginContent(
                 Modifier
                     .fillMaxHeight(0.9f)
                     .systemBarsPadding(),
-                 0.9f
+                0.9f
             ) {
                 Column(
                     modifier = Modifier
@@ -132,16 +133,22 @@ fun LoginContent(
                             modifier = Modifier.padding(
                                 top = dimensions.extraHuge,
                                 bottom = dimensions.huge
-                            )
+                            ),
                         )
                         TextField(
                             text = state.email,
                             onChange = events.onEmailChange,
                             label = stringResource(R.string.email_address),
                             icon = painterResource(id = R.drawable.email_icon),
-                            keyboardType = KeyboardType.Email
+                            keyboardType = KeyboardType.Email,
+                            isError = state.credentialsIsError
                         )
-                        PasswordField(state.password, events.onPasswodChange)
+                        PasswordField(
+                            state.password,
+                            events.onPasswodChange,
+                            isError = state.credentialsIsError,
+                            errorText = state.credentialsError?.let { stringResource(it) } ?: ""
+                        )
                         Text(
                             stringResource(R.string.forgot_password),
                             color = MaterialTheme.colorScheme.onSurface,

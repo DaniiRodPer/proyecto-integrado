@@ -35,6 +35,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.dam.proydrp.R
+import com.dam.proydrp.data.network.SessionManager
 import com.dam.proydrp.ui.common.LocalDimensions
 import com.dam.proydrp.ui.common.TopBarConfig
 import com.dam.proydrp.ui.components.CustomizableTopBar
@@ -42,13 +43,13 @@ import com.dam.proydrp.ui.home.NavHostScreen
 import com.dam.proydrp.ui.home.Routes
 
 @Composable
-fun MainContainerScreen(navController: NavHostController, modifier: Modifier = Modifier) {
+fun MainContainerScreen(navController: NavHostController, sessionManager: SessionManager, startRoute: String, modifier: Modifier = Modifier) {
     var topBarConfig by remember { mutableStateOf(TopBarConfig(false)) }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val dimensions = LocalDimensions.current
 
-    val showBottomBar = currentRoute in listOf(Routes.PROFILE, Routes.DISCOVER, Routes.MATCHLIST)
+    val showBottomBar = currentRoute in listOf(Routes.PROFILE, Routes.DISCOVER, Routes.MATCHLIST, Routes.OTHER_PROFILE)
 
     Scaffold(
         topBar = {
@@ -112,7 +113,7 @@ fun MainContainerScreen(navController: NavHostController, modifier: Modifier = M
                             selected = currentDestination?.hierarchy?.any { it.route == Routes.PROFILE } == true,
                             onClick = {
                                 navController.navigate(Routes.PROFILE) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
+                                    popUpTo(navController.graph.id) {
                                         saveState = true
                                     }
                                     launchSingleTop = true
@@ -140,7 +141,7 @@ fun MainContainerScreen(navController: NavHostController, modifier: Modifier = M
                             selected = currentDestination?.hierarchy?.any { it.route == Routes.DISCOVER } == true,
                             onClick = {
                                 navController.navigate(Routes.DISCOVER) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
+                                    popUpTo(navController.graph.id) {
                                         saveState = true
                                     }
                                     launchSingleTop = true
@@ -168,7 +169,7 @@ fun MainContainerScreen(navController: NavHostController, modifier: Modifier = M
                             selected = currentDestination?.hierarchy?.any { it.route == Routes.MATCHLIST } == true,
                             onClick = {
                                 navController.navigate(Routes.MATCHLIST) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
+                                    popUpTo(navController.graph.id) {
                                         saveState = true
                                     }
                                     launchSingleTop = true
@@ -185,6 +186,8 @@ fun MainContainerScreen(navController: NavHostController, modifier: Modifier = M
             navController,
             scaffoldPadding = paddingValues,
             topBarConfig = { it -> topBarConfig = it },
+            sessionManager = sessionManager,
+            startDestination = startRoute
         )
     }
 }

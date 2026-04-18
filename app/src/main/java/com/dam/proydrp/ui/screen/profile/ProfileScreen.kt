@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,11 +53,14 @@ data class ProfileEvents(
 @Composable
 fun ProfileScreen(
     scaffoldPadding: PaddingValues,
+    targetUserId: String? = null
 ) {
-
     val viewModel: ProfileViewModel = hiltViewModel()
     val currentState: ProfileState = viewModel.state
 
+    LaunchedEffect(Unit) {
+        viewModel.loadUser(targetUserId)
+    }
 
     val events = ProfileEvents(
         {}
@@ -72,9 +76,9 @@ fun ProfileScreen(
 
         ProfileState.NoData -> {
             AnimationComponent(
-                lottie = LottieCompositionSpec.RawRes(R.raw.like_animation),
+                lottie = LottieCompositionSpec.RawRes(R.raw.error_animation),
                 loop = false,
-                text = stringResource(R.string.no_match)
+                text = stringResource(R.string.user_load_error)
             )
         }
 
@@ -105,9 +109,14 @@ fun ProfileContent(
             .fillMaxSize()
             .padding(bottom = scaffoldPadding.calculateBottomPadding(), top = dimensions.extraBig)
     ) {
-        ProfilePic(url = user.profilePicUrl, dimensions.giant)
-        Spacer(Modifier.height(dimensions.medium))
-        Title("${user.name} ${user.surname}")
+        ProfilePic(model = user.profilePicUrl, dimensions.giant)
+        Spacer(Modifier.height(dimensions.large))
+        Title(
+            text = "${user.name} ${user.surname}",
+            center = true,
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+        )
         Spacer(Modifier.height(dimensions.standard))
         FloatingContainer {
             Column(
@@ -119,22 +128,24 @@ fun ProfileContent(
                     ),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        painter = painterResource(R.drawable.location_icon),
-                        contentDescription = null,
-                        modifier = Modifier.size(dimensions.big),
-                        tint = MaterialTheme.colorScheme.secondary
-                    )
-                    Spacer(Modifier.width(dimensions.medium))
-                    Text(
-                        user.city,
-                        style = TextStyle(
-                            color = MaterialTheme.colorScheme.primary,
-                            fontSize = 16.sp,
-                            textAlign = TextAlign.Center
+                if(user.accommodation != null){
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            painter = painterResource(R.drawable.location_icon),
+                            contentDescription = null,
+                            modifier = Modifier.size(dimensions.big),
+                            tint = MaterialTheme.colorScheme.secondary
                         )
-                    )
+                        Spacer(Modifier.width(dimensions.medium))
+                        Text(
+                            user.accommodation.city,
+                            style = TextStyle(
+                                color = MaterialTheme.colorScheme.primary,
+                                fontSize = 16.sp,
+                                textAlign = TextAlign.Center
+                            )
+                        )
+                    }
                 }
                 Spacer(Modifier.height(dimensions.medium))
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -180,43 +191,56 @@ fun ProfileContent(
                         .clip(shape = RoundedCornerShape(dimensions.extraBig))
                         .verticalScroll(scrollState)
                 ) {
-                    HorizontalGallery(
-                        user.accommodationPicsUrls,
-                        230.dp,
-                        Modifier
-                            .padding(dimensions.standard)
-                            .clip(RoundedCornerShape(dimensions.big))
-                    )
-                    Text(
-                        user.accommodationDescription,
-                        style = TextStyle(
-                            fontSize = 14.sp,
-                            textAlign = TextAlign.Center,
-                        ),
-                        modifier = Modifier
-                            .padding(horizontal = dimensions.standard, vertical = dimensions.medium)
-                    )
-                    HorizontalDivider(
-                        thickness = dimensions.tiny,
-                        modifier = Modifier.padding(
-                            dimensions.standard
-                        )
-                    )
+                    if (user.accommodation != null) {
 
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(
-                                start = dimensions.extraLarge,
-                                top = dimensions.extraLarge,
-                                end = dimensions.extraLarge,
-                                bottom = dimensions.bigger,
+                        HorizontalGallery(
+                            user.accommodation.picsUrls,
+                            230.dp,
+                            Modifier
+                                .padding(dimensions.standard)
+                                .clip(RoundedCornerShape(dimensions.big))
+                        )
+                        Text(
+                            user.accommodation.description,
+                            style = TextStyle(
+                                fontSize = 14.sp,
+                                textAlign = TextAlign.Center,
                             ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        TagList(
-                            120, 3, 2,
-                            user.accommodationTags
+                            modifier = Modifier
+                                .padding(
+                                    horizontal = dimensions.standard,
+                                    vertical = dimensions.medium
+                                )
+                        )
+                        HorizontalDivider(
+                            thickness = dimensions.tiny,
+                            modifier = Modifier.padding(
+                                dimensions.standard
+                            )
+                        )
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(
+                                    start = dimensions.extraLarge,
+                                    top = dimensions.extraLarge,
+                                    end = dimensions.extraLarge,
+                                    bottom = dimensions.bigger,
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            TagList(
+                                user.accommodation.squareMeters,
+                                user.accommodation.bedrooms,
+                                user.accommodation.bathrooms,
+                                user.accommodation.tags
+                            )
+                        }
+                    } else {
+                        AnimationComponent(
+                            lottie = LottieCompositionSpec.RawRes(R.raw.error_animation),
+                            text = stringResource(R.string.user_load_error)
                         )
                     }
                 }

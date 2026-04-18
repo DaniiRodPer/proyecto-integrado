@@ -54,7 +54,7 @@ fun HorizontalGallery(
             val index = page % urls.size
 
             PhotoItem(
-                url = urls[index],
+                model = urls[index],
                 borderRadius = dimensions.big,
                 modifier = Modifier
                     .height(height)

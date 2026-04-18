@@ -30,16 +30,19 @@ import com.dam.proydrp.ui.theme.ProydrpTheme
 
 @Composable
 fun HorizontalPhotoSelector(
-    urls: List<String>,
+    items: List<Any>,
     onAddPhotoClick: () -> Unit,
-    modifier: Modifier = Modifier
+    onDeletePhotoClick: (Any) -> Unit,
+    modifier: Modifier = Modifier,
+    maxPhotos: Int = 12
 ) {
 
     val dimensions = LocalDimensions.current
+    val canAddMore = items.size < maxPhotos
 
     Column(modifier = modifier) {
         Text(
-            stringResource(R.string.accommodation_photos),
+            text = "${stringResource(R.string.accommodation_photos)} (${items.size}/$maxPhotos)",
             color = MaterialTheme.colorScheme.primary,
             fontSize = 14.sp,
             modifier = Modifier.padding(start = dimensions.large, bottom = dimensions.standard)
@@ -50,32 +53,36 @@ fun HorizontalPhotoSelector(
             horizontalArrangement = Arrangement.spacedBy(dimensions.medium),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            item {
-                Box(Modifier.padding(end = dimensions.standard)) {
-                    Box(
-                        modifier = Modifier
-                            .size(dimensions.huge)
-                            .clip(RoundedCornerShape(dimensions.large))
-                            .background(MaterialTheme.colorScheme.tertiary)
-                            .clickable { onAddPhotoClick() },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.add_icon),
-                            contentDescription = stringResource(R.string.add_image_desc),
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(dimensions.bigger)
-                        )
+            if (canAddMore) {
+                item {
+                    Box(Modifier.padding(end = dimensions.standard)) {
+                        Box(
+                            modifier = Modifier
+                                .size(dimensions.huge)
+                                .clip(RoundedCornerShape(dimensions.large))
+                                .background(MaterialTheme.colorScheme.tertiary)
+                                .clickable { onAddPhotoClick() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.add_icon),
+                                contentDescription = stringResource(R.string.add_image_desc),
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(dimensions.bigger)
+                            )
+                        }
                     }
                 }
             }
 
-            items(urls) { url ->
+            items(items) { item ->
                 PhotoItem(
-                    url = url,
+                    model = item,
                     width = dimensions.giant,
                     height = dimensions.giant,
-                    borderRadius = dimensions.big
+                    borderRadius = dimensions.big,
+                    showDelete = true,
+                    onDeleteClick = { onDeletePhotoClick(item) }
                 )
             }
         }
@@ -90,7 +97,7 @@ fun HorizontalPhotoSelectorPreview() {
         Surface(
             color = MaterialTheme.colorScheme.surface
         ) {
-            HorizontalPhotoSelector(listOf("", "", "", ""), {})
+            HorizontalPhotoSelector(listOf("", "", "", ""), {}, {})
         }
     }
 }

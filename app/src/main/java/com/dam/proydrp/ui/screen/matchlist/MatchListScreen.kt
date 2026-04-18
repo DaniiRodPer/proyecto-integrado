@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,22 +32,26 @@ import com.dam.proydrp.ui.theme.ProydrpTheme
 
 data class MatchListEvents(
     val onChatClick: (UserProfile) -> Unit,
-    val onNavigate: (UserProfile) -> Unit,
+    val onProfileClick: (String) -> Unit,
     val onDelete: (UserProfile) -> Unit
 )
 
 @Composable
 fun MatchListScreen(
     scaffoldPadding: PaddingValues,
-    onNavigate: (UserProfile) -> Unit,
-    onChatClick: (UserProfile) -> Unit
+    onChatClick: (UserProfile) -> Unit,
+    onNavigateToProfile: (String) -> Unit
 ) {
     val viewModel: MatchListViewModel = hiltViewModel()
     val currentState = viewModel.state
 
+    LaunchedEffect(Unit) {
+        viewModel.loadMatches()
+    }
+
     val events = MatchListEvents(
         onChatClick = onChatClick,
-        onNavigate = onNavigate,
+        onProfileClick = onNavigateToProfile,
         onDelete = viewModel::onDelete,
     )
 
@@ -100,7 +105,7 @@ fun MatchListContent(
             items(state.dataSet) { userProfile ->
                 ListItem(
                     onChatClick = events.onChatClick,
-                    onNavigate = events.onNavigate,
+                    onNavigate = { events.onProfileClick(userProfile.id) },
                     onDelete = events.onDelete,
                     notification = false,
                     userProfile = userProfile

@@ -2,26 +2,28 @@ package com.dam.proydrp.ui.screen.register
 
 data class RegisterState (
     var name: String = "",
-    var nameError: String = "",
+    var nameError: Int? = null,
     var nameIsError: Boolean = false,
 
     var surname: String = "",
-    var surnameError: String = "",
+    var surnameError: Int? = null,
     var surnameIsError: Boolean = false,
 
     var email: String = "",
-    var emailError: String = "",
+    var emailError: Int? = null,
     var emailIsError: Boolean = false,
 
     var emailConfirm: String = "",
-    var emailConfirmError: String = "",
+    var emailConfirmError: Int? = null,
     var emailConfirmIsError: Boolean = false,
 
     var password: String = "",
-    var passwordError: String = "",
+    var passwordError: Int? = null,
     var passwordIsError: Boolean = false,
 
     var passwordConfirm: String = "",
-    var passwordConfirmError: String = "",
-    var passwordConfirmIsError: Boolean = false
+    var passwordConfirmError: Int? = null,
+    var passwordConfirmIsError: Boolean = false,
+
+    var isLoading: Boolean = false
 )

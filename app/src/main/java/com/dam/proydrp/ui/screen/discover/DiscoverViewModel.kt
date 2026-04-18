@@ -5,29 +5,78 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dam.proydrp.data.mock.mockUserProfileList
+import com.dam.proydrp.data.network.BaseResult
+import com.dam.proydrp.data.network.SessionManager
+import com.dam.proydrp.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
-class DiscoverViewModel @Inject constructor() : ViewModel() {
+class DiscoverViewModel @Inject constructor(
+    private val userRepository: UserRepository,
+    private val sessionManager: SessionManager
+) : ViewModel() {
 
     var state by mutableStateOf<DiscoverState>(DiscoverState.Loading)
         private set
 
-    init {
-        loadUsers()
-    }
+    private var loadedToken: String? = null
+    private var currentCity: String? = null
+    private var currentRooms: Int? = null
+    private var currentBathrooms: Int? = null
 
-    private fun loadUsers() {
+    fun verifySessionAndLoad(city: String?, rooms: Int?, bathrooms: Int?) {
         viewModelScope.launch {
-            delay(2000)
-            state = if (mockUserProfileList.isEmpty()) {
-                DiscoverState.NoData
-            } else {
-                DiscoverState.Success(cards = mockUserProfileList)
+            val token = withContext(Dispatchers.IO) { sessionManager.getAuthToken() }
+
+            val tokenChanged = token != loadedToken
+            val filtersChanged = city != currentCity || rooms != currentRooms || bathrooms != currentBathrooms
+
+            if (tokenChanged || filtersChanged) {
+                loadedToken = token
+                currentCity = city
+                currentRooms = rooms
+                currentBathrooms = bathrooms
+
+                loadUsers(city, rooms, bathrooms)
+            }
+        }
+    }
+    fun loadUsers(city: String?, rooms: Int?, bathrooms: Int?) {
+        viewModelScope.launch {
+            state = DiscoverState.Loading
+
+            delay(1500)
+
+            val token = withContext(Dispatchers.IO) {
+                sessionManager.getAuthToken()
+            }
+
+            if (token.isNullOrEmpty()) {
+                state = DiscoverState.NoData
+                return@launch
+            }
+
+            when (val result = userRepository.getDiscoverUsers(token, city, rooms, bathrooms)) {
+                is BaseResult.Success -> {
+                    val users = result.data
+                    state = if (users.isEmpty()) {
+                        DiscoverState.NoData
+                    } else {
+                        DiscoverState.Success(
+                            cards = users,
+                            currentCard = users.firstOrNull()
+                        )
+                    }
+                }
+
+                is BaseResult.Error -> {
+                    state = DiscoverState.NoData
+                }
             }
         }
     }
@@ -46,24 +95,49 @@ class DiscoverViewModel @Inject constructor() : ViewModel() {
     }
 
     fun onSwipe(isLike: Boolean) {
-        val currentState = state
-        if (currentState is DiscoverState.Success) {
-            val remaining = currentState.cards.drop(1)
+        val currentState = state as? DiscoverState.Success ?: return
+        val swipedUser = currentState.currentCard ?: return
+        val remaining = currentState.cards.drop(1)
 
-            state = if (remaining.isEmpty()) {
-                DiscoverState.NoData
-            } else {
-                currentState.copy(
-                    cards = remaining,
-                    currentCard = remaining.firstOrNull(),
-                    swipeLeftTrigger = false,
-                    swipeRightTrigger = false,
-                    isSwipeLoading = false
-                )
-            }
+        state = if (remaining.isEmpty()) {
+            DiscoverState.NoData
+        } else {
+            currentState.copy(
+                cards = remaining,
+                currentCard = remaining.firstOrNull(),
+                swipeLeftTrigger = false,
+                swipeRightTrigger = false,
+                isSwipeLoading = false
+            )
+        }
 
-            if (isLike) {
-                // Lógica de guardado de Like
+        viewModelScope.launch {
+            val token = withContext(Dispatchers.IO) { sessionManager.getAuthToken() } ?: return@launch
+
+            when (val result = userRepository.swipeUser(token, swipedUser.id, isLike)) {
+                is BaseResult.Success -> {
+                    if (result.data.mutual_match) {
+
+                        val latestState = state as? DiscoverState.Success ?: return@launch
+
+                        state = latestState.copy(
+                            matchUser = swipedUser,
+                            showMatchAnimation = true
+                        )
+
+                        delay(4000)
+
+                        val afterDelayState = state as? DiscoverState.Success
+                        if (afterDelayState != null) {
+                            state = afterDelayState.copy(
+                                showMatchAnimation = false,
+                                matchUser = null
+                            )
+                        }
+                    }
+                }
+
+                is BaseResult.Error -> {}
             }
         }
     }

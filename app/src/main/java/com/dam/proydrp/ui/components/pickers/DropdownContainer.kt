@@ -36,6 +36,8 @@ fun DropdownContainer(
     isMultiSelect: Boolean = false,
     maxSelection: Int = Int.MAX_VALUE,
     leadingIcon: Painter? = null,
+    isError: Boolean = false,
+    errorText: String = ""
 ) {
     val dimensions = LocalDimensions.current
 
@@ -65,6 +67,8 @@ fun DropdownContainer(
                 modifier = Modifier
                     .menuAnchor()
                     .fillMaxWidth(),
+                isError = isError,
+                errorText = errorText
             )
 
             ExposedDropdownMenu(

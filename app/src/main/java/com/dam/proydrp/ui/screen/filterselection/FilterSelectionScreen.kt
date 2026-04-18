@@ -13,6 +13,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,22 +39,33 @@ data class FilterSelectionEvents(
     val onRoomsChange: (Int) -> Unit,
     val onBathroomsChange: (Int) -> Unit,
     val onAccommodationTagChanged: (AccommodationTag) -> Unit,
-    val onGoToBack: () -> Unit
+    val onGoToBack: () -> Unit,
+    val onSave: (FilterSelectionState) -> Unit
 )
 
 @Composable
 fun FilterSelectionScreen(
-    onGoToBack: () -> Unit
+    initialCity: String,
+    initialRooms: Int,
+    initialBathrooms: Int,
+    onGoToBack: () -> Unit,
+    onSave: (FilterSelectionState) -> Unit
 ) {
-
     val viewModel: FilterSelectionViewModel = hiltViewModel()
+
+    LaunchedEffect(Unit) {
+        viewModel.onCityChange(initialCity)
+        viewModel.onRoomsChange(initialRooms)
+        viewModel.onBathroomsChange(initialBathrooms)
+    }
 
     val events = FilterSelectionEvents(
         onCityChange = viewModel::onCityChange,
         onRoomsChange = viewModel::onRoomsChange,
         onBathroomsChange = viewModel::onBathroomsChange,
         onAccommodationTagChanged = viewModel::onAccommodationTagChange,
-        onGoToBack = onGoToBack
+        onGoToBack = onGoToBack,
+        onSave = onSave
     )
 
     FilterSelectionContent(
@@ -141,7 +153,7 @@ fun FilterSelectionContent(
         }
         PrimaryButton(
             text = stringResource(R.string.save),
-            onClick = {},
+            onClick = { events.onSave(state) },
             modifier = Modifier.padding(top = dimensions.standard).fillMaxWidth(0.9f),
             textPadding = dimensions.small
         )
@@ -158,7 +170,7 @@ fun FilterSelectionPreview() {
         ) {
             val state = FilterSelectionState()
             val events = FilterSelectionEvents(
-                {}, {}, {}, {}, {}
+                {}, {}, {}, {}, {}, {}
             )
             FilterSelectionContent(state = state, events = events)
         }

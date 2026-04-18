@@ -57,8 +57,8 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
-    implementation(libs.firebase.crashlytics.buildtools)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.compose.foundation)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -88,4 +88,12 @@ dependencies {
 
     implementation(libs.accompanist.permissions)
     implementation(libs.kotlinx.serialization.json)
+
+    //retrofit
+    implementation(libs.retrofit.main)
+    implementation(libs.retrofit.gson)
+    implementation(libs.okhttp.logging)
+
+    //SecureSharedPreferences
+    implementation(libs.androidx.security.crypto)
 }

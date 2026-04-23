@@ -12,7 +12,7 @@ plugins {
 }
 
 android {
-    namespace = "com.dam.proydrp"
+    namespace = "com.dam.dovelia"
     compileSdk = 36
     val properties = Properties()
     val propertiesFile = project.rootProject.file("local.properties")
@@ -22,7 +22,7 @@ android {
     val baseUrlIp = properties.getProperty("BASE_URL_IP") ?: "10.0.2.2"
 
     defaultConfig {
-        applicationId = "com.dam.proydrp"
+        applicationId = "com.dam.dovelia"
         minSdk = 26
         targetSdk = 36
         versionCode = 1

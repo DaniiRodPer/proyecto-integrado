@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "proydrp"
+rootProject.name = "dovelia"
 include(":app")
  

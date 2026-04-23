@@ -1,6 +1,8 @@
 package com.dam.proydrp.data.network
 
 import com.dam.proydrp.data.model.LoginRequest
+import com.dam.proydrp.data.model.Message
+import com.dam.proydrp.data.model.MessageCreate
 import com.dam.proydrp.data.model.SwipeRequest
 import com.dam.proydrp.data.model.SwipeResponse
 import com.dam.proydrp.data.model.TokenResponse
@@ -48,6 +50,11 @@ interface ApiService {
     @GET("matches")
     suspend fun getMatches(@Header("Authorization") token: String): Response<List<UserProfile>>
 
+    @GET("messages/{other_user_id}")
+    suspend fun getMessages(
+        @Header("Authorization") token: String,
+        @Path("other_user_id") otherUserId: String
+    ): Response<List<Message>>
 
     @POST("login")
     suspend fun loginUser(@Body request: LoginRequest): Response<TokenResponse>
@@ -66,6 +73,12 @@ interface ApiService {
     suspend fun uploadImage(
         @Part file: MultipartBody.Part
     ): Response<UploadResponse>
+
+    @POST("messages")
+    suspend fun sendMessage(
+        @Header("Authorization") token: String,
+        @Body message: MessageCreate
+    ): Response<Message>
 
     @PUT("users/{user_id}")
     suspend fun updateUser(

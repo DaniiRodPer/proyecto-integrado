@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -12,6 +14,12 @@ plugins {
 android {
     namespace = "com.dam.proydrp"
     compileSdk = 36
+    val properties = Properties()
+    val propertiesFile = project.rootProject.file("local.properties")
+    if (propertiesFile.exists()) {
+        properties.load(propertiesFile.inputStream())
+    }
+    val baseUrlIp = properties.getProperty("BASE_URL_IP") ?: "10.0.2.2"
 
     defaultConfig {
         applicationId = "com.dam.proydrp"
@@ -21,6 +29,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "BASE_URL", "\"http://$baseUrlIp:8000/\"")
+        buildConfigField("String", "WS_URL", "\"ws://$baseUrlIp:8000/ws/\"")
     }
 
     buildTypes {
@@ -41,6 +52,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     room {
         schemaDirectory("$projectDir/schemas")
@@ -96,4 +108,7 @@ dependencies {
 
     //SecureSharedPreferences
     implementation(libs.androidx.security.crypto)
+
+    //SplashScreen
+    implementation(libs.androidx.core.splashscreen)
 }

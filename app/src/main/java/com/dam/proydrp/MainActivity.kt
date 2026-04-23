@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.compose.rememberNavController
 import com.dam.proydrp.data.network.SessionManager
 import com.dam.proydrp.ui.common.Dimensions
@@ -24,6 +25,8 @@ class MainActivity : ComponentActivity() {
     lateinit var sessionManager: SessionManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
+
         super.onCreate(savedInstanceState)
 
         val startRoute = if (sessionManager.isUserLoggedIn()) {

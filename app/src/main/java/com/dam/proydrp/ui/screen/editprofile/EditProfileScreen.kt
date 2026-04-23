@@ -157,14 +157,14 @@ fun EditProfileScreen(
     when (currentState) {
         EditProfileState.Loading -> {
             AnimationComponent(
-                lottie = LottieCompositionSpec.RawRes(R.raw.loading_animation),
+                lottie = R.raw.loading_animation,
                 text = stringResource(R.string.loading)
             )
         }
 
         EditProfileState.Error -> {
             AnimationComponent(
-                lottie = LottieCompositionSpec.RawRes(R.raw.error_animation),
+                lottie = R.raw.error_animation,
                 loop = false,
                 text = stringResource(R.string.no_data_error)
             )

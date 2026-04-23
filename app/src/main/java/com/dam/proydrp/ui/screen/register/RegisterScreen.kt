@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -96,14 +97,14 @@ fun RegisterContent(
                 .background(Color.Black.copy(alpha = 0.3f))
         )
         Column(
-            Modifier.fillMaxSize(),
+            Modifier.fillMaxSize().statusBarsPadding(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Title(
                 stringResource(R.string.app_name),
                 modifier = Modifier.padding(
-                    top = dimensions.huge,
-                    bottom = dimensions.huge
+                    top = dimensions.extraHuge,
+                    bottom = dimensions.extraHuge
                 ),
                 fontSize = 56.sp,
                 color = Color.White

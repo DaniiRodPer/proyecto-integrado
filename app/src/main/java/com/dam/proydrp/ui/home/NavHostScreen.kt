@@ -1,9 +1,13 @@
 package com.dam.proydrp.ui.home
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -11,9 +15,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavDestination
 import androidx.navigation.NavHostController
@@ -23,9 +29,12 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.dam.proydrp.R
 import com.dam.proydrp.data.model.UserProfile
 import com.dam.proydrp.data.network.SessionManager
+import com.dam.proydrp.ui.common.LocalDimensions
 import com.dam.proydrp.ui.common.TopBarConfig
 import com.dam.proydrp.ui.components.CustomAlertDialog
+import com.dam.proydrp.ui.components.images.ProfilePic
 import com.dam.proydrp.ui.components.text.Title
+import com.dam.proydrp.ui.screen.chat.ChatScreen
 import com.dam.proydrp.ui.screen.matchlist.MatchListScreen
 import com.dam.proydrp.ui.screen.discover.DiscoverScreen
 import com.dam.proydrp.ui.screen.editprofile.EditProfileScreen
@@ -44,7 +53,7 @@ object Routes {
     const val EDITPROFILE = "editprofile"
     const val REGISTER_STEP_2 = "register_step_2"
     const val FILTERS = "filters"
-
+    const val CHAT = "chat"
 }
 
 data class DialogConfig(
@@ -108,7 +117,9 @@ fun NavHostScreen(
                                     sessionManager.clearSession()
                                     activeDialog = null
                                     navController.navigate(Routes.LOGIN) {
-                                        popUpTo(0) { inclusive = true } //Cleans de back button previous screens
+                                        popUpTo(0) {
+                                            inclusive = true
+                                        } //Cleans de back button previous screens
                                     }
                                 },
                                 onDismiss = { activeDialog = null }
@@ -196,6 +207,37 @@ fun NavHostScreen(
                 )
             }
 
+            Routes.CHAT -> {
+                val previousEntry = navController.previousBackStackEntry
+                val targetName = previousEntry?.savedStateHandle?.get<String>("target_user_name") ?: "Chat"
+                val targetPic = previousEntry?.savedStateHandle?.get<String>("target_user_pic") ?: ""
+
+                topBarConfig(
+                    TopBarConfig(
+                        show = true,
+                        leadingIcon = R.drawable.arrow_back_icon,
+                        onLeadingClick = { navController.popBackStack() },
+                        customContent = {
+                            val dimensions = LocalDimensions.current
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(dimensions.standard)
+                            ) {
+                                ProfilePic(targetPic, dimensions.huge)
+                                Text(
+                                    text = targetName,
+                                    fontSize = 20.sp,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    )
+                )
+            }
+
             else -> topBarConfig(TopBarConfig(show = false))
         }
     }
@@ -225,14 +267,20 @@ fun NavHostScreen(
         composable(Routes.DISCOVER) { backStackEntry ->
             val savedStateHandle = backStackEntry.savedStateHandle
 
-            val filterCity by savedStateHandle.getStateFlow<String?>("filter_city", null).collectAsState()
-            val filterRooms by savedStateHandle.getStateFlow<Int?>("filter_rooms", null).collectAsState()
-            val filterBathrooms by savedStateHandle.getStateFlow<Int?>("filter_bathrooms", null).collectAsState()
+            val filterCity by savedStateHandle.getStateFlow<String?>("filter_city", null)
+                .collectAsState()
+            val filterRooms by savedStateHandle.getStateFlow<Int?>("filter_rooms", null)
+                .collectAsState()
+            val filterBathrooms by savedStateHandle.getStateFlow<Int?>("filter_bathrooms", null)
+                .collectAsState()
 
             DiscoverScreen(
                 scaffoldPadding = scaffoldPadding,
                 onNavigateToProfile = { userId ->
-                    navController.currentBackStackEntry?.savedStateHandle?.set("target_user_id", userId)
+                    navController.currentBackStackEntry?.savedStateHandle?.set(
+                        "target_user_id",
+                        userId
+                    )
                     navController.navigate(Routes.OTHER_PROFILE)
                 },
                 filterCity = filterCity,
@@ -242,10 +290,20 @@ fun NavHostScreen(
         }
         composable(Routes.MATCHLIST) {
             MatchListScreen(
-                scaffoldPadding,
-                {},
+                scaffoldPadding = scaffoldPadding,
+                onChatClick = { user ->
+                    navController.currentBackStackEntry?.savedStateHandle?.apply {
+                        set("target_user_id", user.id)
+                        set("target_user_name", "${user.name} ${user.surname}, ${user.accommodation?.city}")
+                        set("target_user_pic", user.profilePicUrl)
+                    }
+                    navController.navigate(Routes.CHAT)
+                },
                 onNavigateToProfile = { userId ->
-                    navController.currentBackStackEntry?.savedStateHandle?.set("target_user_id", userId)
+                    navController.currentBackStackEntry?.savedStateHandle?.set(
+                        "target_user_id",
+                        userId
+                    )
                     navController.navigate(Routes.OTHER_PROFILE)
                 }
             )
@@ -283,7 +341,7 @@ fun NavHostScreen(
                     userData = partialUser,
                     isRegisterMode = true,
                     onGoToBack = { navController.popBackStack() },
-                    onRegisterSuccess = {navController.navigate(Routes.PROFILE)}
+                    onRegisterSuccess = { navController.navigate(Routes.PROFILE) }
                 )
             }
         }
@@ -318,6 +376,16 @@ fun NavHostScreen(
                     }
                 )
             }
+        }
+        composable(Routes.CHAT) {
+            val targetUserId = navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.get<String>("target_user_id") ?: ""
+
+            ChatScreen(
+                scaffoldPadding = scaffoldPadding,
+                targetUserId = targetUserId
+            )
         }
     }
 }

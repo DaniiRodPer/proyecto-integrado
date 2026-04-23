@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -52,6 +53,7 @@ fun MainContainerScreen(navController: NavHostController, sessionManager: Sessio
     val showBottomBar = currentRoute in listOf(Routes.PROFILE, Routes.DISCOVER, Routes.MATCHLIST, Routes.OTHER_PROFILE)
 
     Scaffold(
+        contentWindowInsets = WindowInsets.systemBars,
         topBar = {
             AnimatedVisibility(
                 visible = topBarConfig.show,

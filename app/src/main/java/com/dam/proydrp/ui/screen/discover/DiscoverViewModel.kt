@@ -29,14 +29,14 @@ class DiscoverViewModel @Inject constructor(
     private var currentRooms: Int? = null
     private var currentBathrooms: Int? = null
 
-    fun verifySessionAndLoad(city: String?, rooms: Int?, bathrooms: Int?) {
+    fun verifySessionAndLoad(city: String?, rooms: Int?, bathrooms: Int?, forceRefresh: Boolean = false) {
         viewModelScope.launch {
             val token = withContext(Dispatchers.IO) { sessionManager.getAuthToken() }
 
             val tokenChanged = token != loadedToken
             val filtersChanged = city != currentCity || rooms != currentRooms || bathrooms != currentBathrooms
 
-            if (tokenChanged || filtersChanged) {
+            if (tokenChanged || filtersChanged || forceRefresh) {
                 loadedToken = token
                 currentCity = city
                 currentRooms = rooms
@@ -46,7 +46,7 @@ class DiscoverViewModel @Inject constructor(
             }
         }
     }
-    fun loadUsers(city: String?, rooms: Int?, bathrooms: Int?) {
+    fun loadUsers(city: String? = null, rooms: Int? = null, bathrooms: Int? = null) {
         viewModelScope.launch {
             state = DiscoverState.Loading
 

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -69,14 +70,14 @@ fun ProfileScreen(
     when (currentState) {
         ProfileState.Loading -> {
             AnimationComponent(
-                lottie = LottieCompositionSpec.RawRes(R.raw.loading_animation),
+                lottie = R.raw.loading_animation,
                 text = stringResource(R.string.loading)
             )
         }
 
         ProfileState.NoData -> {
             AnimationComponent(
-                lottie = LottieCompositionSpec.RawRes(R.raw.error_animation),
+                lottie = R.raw.error_animation,
                 loop = false,
                 text = stringResource(R.string.user_load_error)
             )
@@ -107,7 +108,8 @@ fun ProfileContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxSize()
-            .padding(bottom = scaffoldPadding.calculateBottomPadding(), top = dimensions.extraBig)
+            .statusBarsPadding()
+            .padding(bottom = scaffoldPadding.calculateBottomPadding(), top = dimensions.large)
     ) {
         ProfilePic(model = user.profilePicUrl, dimensions.giant)
         Spacer(Modifier.height(dimensions.large))
@@ -239,7 +241,7 @@ fun ProfileContent(
                         }
                     } else {
                         AnimationComponent(
-                            lottie = LottieCompositionSpec.RawRes(R.raw.error_animation),
+                            lottie = R.raw.error_animation,
                             text = stringResource(R.string.user_load_error)
                         )
                     }

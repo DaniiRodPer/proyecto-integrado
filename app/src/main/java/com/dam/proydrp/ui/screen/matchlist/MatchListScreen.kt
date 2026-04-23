@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
@@ -58,14 +59,14 @@ fun MatchListScreen(
     when (currentState) {
         MatchListState.Loading -> {
             AnimationComponent(
-                lottie = LottieCompositionSpec.RawRes(R.raw.loading_animation),
+                lottie = R.raw.loading_animation,
                 text = stringResource(R.string.loading)
             )
         }
 
         MatchListState.NoData -> {
             AnimationComponent(
-                lottie = LottieCompositionSpec.RawRes(R.raw.like_animation),
+                lottie = R.raw.like_animation,
                 loop = false,
                 text = stringResource(R.string.no_match)
             )
@@ -91,8 +92,9 @@ fun MatchListContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .statusBarsPadding()
             .padding(
-                top = dimensions.enormous,
+                top = dimensions.huge,
                 bottom = scaffoldPadding.calculateBottomPadding()
             ),
         contentAlignment = Alignment.TopCenter,

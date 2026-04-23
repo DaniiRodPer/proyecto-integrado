@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Nombre</string>
+    <string name="app_name">Dovelia</string>
     <string name="nav_profile_desc">Perfil</string>
     <string name="nav_chatlist_desc">Chat</string>
     <string name="nav_discover_desc">Descubrir</string>
@@ -118,4 +118,5 @@
     <string name="match_desc">Has hecho Match!</string>
     <string name="match">Match!</string>
     <string name="Reload">Actualizar</string>
+    <string name="greeting">"Saluda!"</string>
 </resources>

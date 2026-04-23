@@ -1,5 +1,6 @@
 package com.dam.proydrp.ui.components
 
+import androidx.annotation.RawRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -27,16 +28,13 @@ import com.dam.proydrp.ui.theme.ProydrpTheme
 
 @Composable
 fun AnimationComponent(
-    lottie: LottieCompositionSpec,
-    loop: Boolean = true,
+    @RawRes lottie: Int, loop: Boolean = true,
     text: String? = null,
     animationSize: Dp = LocalDimensions.current.giant * 2,
     fontSize: TextUnit = 32.sp
 ) {
     val dimensions = LocalDimensions.current
-    val composition by rememberLottieComposition(
-        lottie
-    )
+    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(lottie))
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -68,7 +66,7 @@ fun LoadingAnimationPreview() {
         Surface(
             color = MaterialTheme.colorScheme.background
         ) {
-            AnimationComponent(LottieCompositionSpec.RawRes(R.raw.loading_animation))
+            AnimationComponent(R.raw.loading_animation)
         }
     }
 }

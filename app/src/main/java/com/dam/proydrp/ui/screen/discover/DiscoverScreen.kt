@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -62,7 +63,7 @@ fun DiscoverScreen(
         onButtonPress = viewModel::onButtonPressed,
         onUpdate = {
             val cityToPass = if (filterCity.isNullOrEmpty()) null else filterCity
-            viewModel.verifySessionAndLoad(cityToPass, filterRooms, filterBathrooms)
+            viewModel.verifySessionAndLoad(cityToPass, filterRooms, filterBathrooms, true)
         },
         onCardClick = onNavigateToProfile
     )
@@ -79,7 +80,7 @@ fun DiscoverScreen(
                 contentAlignment = Alignment.Center
             ) {
                 AnimationComponent(
-                    lottie = LottieCompositionSpec.RawRes(R.raw.loading_animation),
+                    lottie = R.raw.loading_animation,
                     text = stringResource(R.string.loading)
                 )
             }
@@ -98,7 +99,7 @@ fun DiscoverScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     AnimationComponent(
-                        lottie = LottieCompositionSpec.RawRes(R.raw.swipes_animation),
+                        lottie = R.raw.swipes_animation,
                         text = stringResource(R.string.no_swipes)
                     )
 
@@ -135,8 +136,9 @@ fun DiscoverContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .statusBarsPadding()
             .padding(
-                top = dimensions.enormous,
+                top = dimensions.extraHuge,
                 bottom = scaffoldPadding.calculateBottomPadding()
             ),
         contentAlignment = Alignment.TopCenter,
@@ -145,7 +147,7 @@ fun DiscoverContent(
             Column(modifier = Modifier.fillMaxSize()) {
                 Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                     AnimationComponent(
-                        lottie = LottieCompositionSpec.RawRes(R.raw.swipes_animation),
+                        lottie = R.raw.swipes_animation,
                         text = stringResource(R.string.no_swipes),
                     )
                 }
@@ -163,7 +165,7 @@ fun DiscoverContent(
                     contentAlignment = Alignment.Center
                 ) {
                     AnimationComponent(
-                        lottie = LottieCompositionSpec.RawRes(R.raw.match_animation),
+                        lottie = R.raw.match_animation,
                         text = stringResource(R.string.match_desc),
                         animationSize = dimensions.extraGiant * 2,
                         fontSize = 42.sp

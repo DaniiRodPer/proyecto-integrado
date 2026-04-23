@@ -1,6 +1,8 @@
 package com.dam.proydrp.data.repository
 
 import com.dam.proydrp.data.model.LoginRequest
+import com.dam.proydrp.data.model.Message
+import com.dam.proydrp.data.model.MessageCreate
 import com.dam.proydrp.data.model.SwipeRequest
 import com.dam.proydrp.data.model.SwipeResponse
 import com.dam.proydrp.data.model.TokenResponse
@@ -181,6 +183,27 @@ class UserRepository @Inject constructor(
             }
         } catch (e: Exception) {
             BaseResult.Error(Exception(e.message ?: "Error de conexión al cargar matches"))
+        }
+    }
+
+
+    suspend fun getChatMessages(token: String, otherUserId: String): BaseResult<List<Message>> {
+        return try {
+            val response = apiService.getMessages("Bearer $token", otherUserId)
+            if (response.isSuccessful) BaseResult.Success(response.body() ?: emptyList())
+            else BaseResult.Error(Exception("Error al cargar chat"))
+        } catch (e: Exception) {
+            BaseResult.Error(e)
+        }
+    }
+
+    suspend fun sendMessage(token: String, messageCreate: MessageCreate): BaseResult<Message> {
+        return try {
+            val response = apiService.sendMessage("Bearer $token", messageCreate)
+            if (response.isSuccessful && response.body() != null) BaseResult.Success(response.body()!!)
+            else BaseResult.Error(Exception("Error al enviar mensaje"))
+        } catch (e: Exception) {
+            BaseResult.Error(e)
         }
     }
 }

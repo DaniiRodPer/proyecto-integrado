@@ -1,5 +1,6 @@
 package com.dam.proydrp.data.network
 
+import com.dam.proydrp.BuildConfig
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonDeserializer
 import com.google.gson.JsonPrimitive
@@ -11,10 +12,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.time.LocalDate
 
 object RetrofitClient {
-
-    // Si usas el emulador de Android Studio, 127.0.0.1 no funciona porque
-    // apuntaría al propio teléfono. Tienes que usar 10.0.2.2 para apuntar a tu PC.
-    private const val BASE_URL = "http://10.0.2.2:8000/"
+    private const val BASE_URL = BuildConfig.BASE_URL
 
     private val gson = GsonBuilder()
         .registerTypeAdapter(LocalDate::class.java, JsonDeserializer { json, _, _ ->

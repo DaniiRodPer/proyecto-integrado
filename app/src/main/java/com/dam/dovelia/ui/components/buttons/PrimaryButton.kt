@@ -1,14 +1,18 @@
 package com.dam.dovelia.ui.components.buttons
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -22,13 +26,15 @@ fun PrimaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    isLoading: Boolean = false,
+    loadingText: String? = null,
     textPadding: Dp = LocalDimensions.current.standard
 ) {
 
     val dimensions = LocalDimensions.current
 
     Button(
-        onClick = { onClick() },
+        onClick = onClick,
         modifier.fillMaxWidth(),
         shape = RoundedCornerShape(dimensions.large),
         colors = ButtonDefaults.buttonColors(
@@ -37,9 +43,24 @@ fun PrimaryButton(
             disabledContainerColor = MaterialTheme.colorScheme.onBackground,
             disabledContentColor = MaterialTheme.colorScheme.background
         ),
-        enabled = enabled
+        enabled = enabled && !isLoading
     ) {
-        Text(text, Modifier.padding(textPadding), fontSize = 18.sp)
+        FlowRow(
+            horizontalArrangement = Arrangement.Center,
+            itemVerticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ){
+            if(isLoading){
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.background)
+                if(loadingText != null){
+                    Text(loadingText, Modifier.padding(textPadding), fontSize = 18.sp)
+                } else {
+                    Text(text, Modifier.padding(textPadding), fontSize = 18.sp)
+                }
+            } else {
+                Text(text, Modifier.padding(textPadding), fontSize = 18.sp)
+            }
+        }
     }
 }
 
@@ -50,7 +71,7 @@ fun PrimaryButtonPreview() {
         Surface(
             color = MaterialTheme.colorScheme.background
         ) {
-            PrimaryButton("Login", {})
+            PrimaryButton("Login", {}, isLoading = false)
         }
     }
 }

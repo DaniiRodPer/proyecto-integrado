@@ -49,7 +49,8 @@ fun DiscoverScreen(
     onNavigateToProfile: (String) -> Unit,
     filterCity: String?,
     filterRooms: Int?,
-    filterBathrooms: Int?
+    filterBathrooms: Int?,
+    filterTags: List<String>?
 ) {
     val viewModel: DiscoverViewModel = hiltViewModel()
     val currentState: DiscoverState = viewModel.state
@@ -60,14 +61,14 @@ fun DiscoverScreen(
         onButtonPress = viewModel::onButtonPressed,
         onUpdate = {
             val cityToPass = if (filterCity.isNullOrEmpty()) null else filterCity
-            viewModel.verifySessionAndLoad(cityToPass, filterRooms, filterBathrooms, true)
+            viewModel.verifySessionAndLoad(cityToPass, filterRooms, filterBathrooms, filterTags, true)
         },
         onCardClick = onNavigateToProfile
     )
 
     LaunchedEffect(filterCity, filterRooms, filterBathrooms) {
         val cityToPass = if (filterCity.isNullOrEmpty()) null else filterCity
-        viewModel.verifySessionAndLoad(cityToPass, filterRooms, filterBathrooms)
+        viewModel.verifySessionAndLoad(cityToPass, filterRooms, filterBathrooms, filterTags)
     }
 
     when (currentState) {

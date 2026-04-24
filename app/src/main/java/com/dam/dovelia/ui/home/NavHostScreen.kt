@@ -40,6 +40,7 @@ import com.dam.dovelia.ui.screen.editprofile.EditProfileScreen
 import com.dam.dovelia.ui.screen.filterselection.FilterSelectionScreen
 import com.dam.dovelia.ui.screen.login.LoginScreen
 import com.dam.dovelia.ui.screen.profile.ProfileScreen
+import com.dam.dovelia.ui.screen.recoverpassword.RecoverPasswordScreen
 import com.dam.dovelia.ui.screen.register.RegisterScreen
 
 object Routes {
@@ -53,6 +54,7 @@ object Routes {
     const val REGISTER_STEP_2 = "register_step_2"
     const val FILTERS = "filters"
     const val CHAT = "chat"
+    const val RECOVER_PASSWORD = "recover_password"
 }
 
 data class DialogConfig(
@@ -169,7 +171,7 @@ fun NavHostScreen(
                     ))
             }
 
-            Routes.LOGIN, Routes.REGISTER -> {
+            Routes.LOGIN, Routes.REGISTER, Routes.RECOVER_PASSWORD -> {
                 topBarConfig(TopBarConfig(show = false))
             }
 
@@ -272,6 +274,8 @@ fun NavHostScreen(
                 .collectAsState()
             val filterBathrooms by savedStateHandle.getStateFlow<Int?>("filter_bathrooms", null)
                 .collectAsState()
+            val filterTags by savedStateHandle.getStateFlow<List<String>?>("filter_tags", null)
+                .collectAsState()
 
             DiscoverScreen(
                 scaffoldPadding = scaffoldPadding,
@@ -284,7 +288,8 @@ fun NavHostScreen(
                 },
                 filterCity = filterCity,
                 filterRooms = filterRooms,
-                filterBathrooms = filterBathrooms
+                filterBathrooms = filterBathrooms,
+                filterTags = filterTags
             )
         }
         composable(Routes.MATCHLIST) {
@@ -315,7 +320,25 @@ fun NavHostScreen(
                         popUpTo(0) { inclusive = true }
                         launchSingleTop = true
                     }
-                }
+                },
+                onNavigateToRegisterStep2 = { partialUser ->
+                    navController.currentBackStackEntry?.savedStateHandle?.set(
+                        "temp_user",
+                        partialUser
+                    )
+                    navController.navigate(Routes.REGISTER_STEP_2)
+                },
+                 onForgotPassword = { navController.navigate(Routes.RECOVER_PASSWORD) }
+            )
+        }
+        composable(Routes.RECOVER_PASSWORD) {
+            RecoverPasswordScreen(
+                onNavigateToLogin = {
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(Routes.LOGIN) { inclusive = true }
+                    }
+                },
+                onCancel = { navController.popBackStack() }
             )
         }
         composable(Routes.REGISTER) {
@@ -358,18 +381,21 @@ fun NavHostScreen(
             val initialCity = savedStateHandle?.get<String>("filter_city") ?: ""
             val initialRooms = savedStateHandle?.get<Int>("filter_rooms") ?: 1
             val initialBathrooms = savedStateHandle?.get<Int>("filter_bathrooms") ?: 1
+            val initialTags = savedStateHandle?.get<List<String>>("filter_tags") ?: emptyList()
 
             Box(Modifier.padding(scaffoldPadding)) {
                 FilterSelectionScreen(
                     initialCity = initialCity,
                     initialRooms = initialRooms,
                     initialBathrooms = initialBathrooms,
+                    initialTags = initialTags,
                     onGoToBack = { navController.popBackStack() },
                     onSave = { filterState ->
                         savedStateHandle?.apply {
                             set("filter_city", filterState.city)
                             set("filter_rooms", filterState.rooms)
                             set("filter_bathrooms", filterState.bathrooms)
+                            set("filter_tags", filterState.accommodationTags.map { it.name })
                         }
                         navController.popBackStack()
                     }

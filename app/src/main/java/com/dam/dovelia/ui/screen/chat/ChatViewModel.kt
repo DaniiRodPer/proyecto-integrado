@@ -39,24 +39,40 @@ class ChatViewModel @Inject constructor(
         if (targetUserIdLocal.isNotEmpty()) return
         targetUserIdLocal = targetUserId
 
+        repository.currentChatUserId = targetUserId
+
         viewModelScope.launch {
+            repository.markAsRead(targetUserId)
             val myProfileResult = repository.getMyUser()
             val myId = if (myProfileResult is BaseResult.Success) myProfileResult.data.id else ""
 
-            val token = withContext(Dispatchers.IO) { sessionManager.getAuthToken() } ?: return@launch
+            val token =
+                withContext(Dispatchers.IO) { sessionManager.getAuthToken() } ?: return@launch
             val targetUserResult = repository.getUserProfile(token, targetUserId)
 
             if (targetUserResult is BaseResult.Success) {
-                // Pedimos TODOS los mensajes de golpe
                 val historyResult = repository.getChatMessages(token, targetUserId)
-                val history = if (historyResult is BaseResult.Success) historyResult.data else emptyList()
+                val history =
+                    if (historyResult is BaseResult.Success) historyResult.data else emptyList()
 
                 state = ChatState.Success(
                     myUserId = myId,
                     targetUser = targetUserResult.data,
                     messages = history
                 )
-                connectWebSocket(myId)
+
+                launch {
+                    repository.incomingMessages.collect { newMessage ->
+                        if (newMessage.sender_id == targetUserIdLocal) {
+                            val currentState = state as? ChatState.Success
+                            if (currentState != null && !currentState.messages.any { it.id == newMessage.id }) {
+                                state =
+                                    currentState.copy(messages = currentState.messages + newMessage)
+                                repository.markAsRead(targetUserIdLocal)
+                            }
+                        }
+                    }
+                }
             } else {
                 state = ChatState.NoData
             }
@@ -82,15 +98,21 @@ class ChatViewModel @Inject constructor(
                             state = currentState.copy(messages = currentState.messages + newMessage)
                         }
                     }
-                } catch (e: Exception) { e.printStackTrace() }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
         }
         webSocket = client.newWebSocket(request, listener)
     }
 
+    fun leaveChat() {
+        repository.currentChatUserId = null
+    }
+
     override fun onCleared() {
         super.onCleared()
-        webSocket?.close(1000, "Cerrando chat")
+        leaveChat()
     }
 
     fun onMessageChange(text: String) {
@@ -105,7 +127,8 @@ class ChatViewModel @Inject constructor(
         state = currentState.copy(inputText = "")
 
         viewModelScope.launch {
-            val token = withContext(Dispatchers.IO) { sessionManager.getAuthToken() } ?: return@launch
+            val token =
+                withContext(Dispatchers.IO) { sessionManager.getAuthToken() } ?: return@launch
             val msg = MessageCreate(receiver_id = targetUserIdLocal, text = textToSend)
             val result = repository.sendMessage(token, msg)
             if (result is BaseResult.Success) {

@@ -24,6 +24,7 @@ class MatchListViewModel @Inject constructor(
     var state: MatchListState by mutableStateOf(MatchListState.Loading)
         private set
 
+    val unreadUsers = userRepository.unreadUsers
 
     fun loadMatches() {
         viewModelScope.launch {

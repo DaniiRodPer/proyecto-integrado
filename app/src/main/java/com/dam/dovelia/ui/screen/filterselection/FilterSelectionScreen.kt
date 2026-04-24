@@ -23,16 +23,18 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.dam.dovelia.R
 import com.dam.dovelia.data.model.AccommodationTag
-import com.dam.dovelia.data.model.SUPPORTED_CITIES
+import com.dam.dovelia.data.model.CityResult
 import com.dam.dovelia.ui.common.LocalDimensions
 import com.dam.dovelia.ui.components.pickers.CheckBoxField
-import com.dam.dovelia.ui.components.pickers.DropdownContainer
 import com.dam.dovelia.ui.components.FloatingContainer
 import com.dam.dovelia.ui.components.buttons.PrimaryButton
+import com.dam.dovelia.ui.components.buttons.SecondaryButton
+import com.dam.dovelia.ui.components.pickers.CityAutocompleteField
 import com.dam.dovelia.ui.components.pickers.NumberStepField
 import com.dam.dovelia.ui.theme.ProydrpTheme
 import com.dam.dovelia.ui.utils.getAccommodationTagIcon
 import com.dam.dovelia.ui.utils.getAccommodationTagLabel
+import kotlin.compareTo
 
 data class FilterSelectionEvents(
     val onCityChange: (String) -> Unit,
@@ -40,7 +42,11 @@ data class FilterSelectionEvents(
     val onBathroomsChange: (Int) -> Unit,
     val onAccommodationTagChanged: (AccommodationTag) -> Unit,
     val onGoToBack: () -> Unit,
-    val onSave: (FilterSelectionState) -> Unit
+    val onSave: (FilterSelectionState) -> Unit,
+    val onSearchClick: () -> Unit,
+    val onCityQueryChange: (String) -> Unit,
+    val onCitySelected: (CityResult) -> Unit,
+    val onClearFilters: () -> Unit
 )
 
 @Composable
@@ -48,15 +54,18 @@ fun FilterSelectionScreen(
     initialCity: String,
     initialRooms: Int,
     initialBathrooms: Int,
+    initialTags: List<String>,
     onGoToBack: () -> Unit,
     onSave: (FilterSelectionState) -> Unit
 ) {
     val viewModel: FilterSelectionViewModel = hiltViewModel()
 
     LaunchedEffect(Unit) {
+        viewModel.onCityQueryChange(initialCity)
         viewModel.onCityChange(initialCity)
         viewModel.onRoomsChange(initialRooms)
         viewModel.onBathroomsChange(initialBathrooms)
+        viewModel.onInitialTags(initialTags)
     }
 
     val events = FilterSelectionEvents(
@@ -65,7 +74,11 @@ fun FilterSelectionScreen(
         onBathroomsChange = viewModel::onBathroomsChange,
         onAccommodationTagChanged = viewModel::onAccommodationTagChange,
         onGoToBack = onGoToBack,
-        onSave = onSave
+        onSave = onSave,
+        onSearchClick = viewModel::searchCities,
+        onCitySelected = viewModel::onCitySelected,
+        onCityQueryChange = viewModel::onCityQueryChange,
+        onClearFilters = viewModel::onClearFilters
     )
 
     FilterSelectionContent(
@@ -80,6 +93,12 @@ fun FilterSelectionContent(
     events: FilterSelectionEvents,
 ) {
     val dimensions = LocalDimensions.current
+
+    val hasActiveFilters = state.city.isNotEmpty() ||
+            state.rooms > 1 ||
+            state.bathrooms > 1 ||
+            state.accommodationTags.isNotEmpty()
+
 
     Column(
         Modifier.fillMaxSize(),
@@ -103,14 +122,14 @@ fun FilterSelectionContent(
                         .padding(horizontal = dimensions.large)
                 ) {
                     Spacer(Modifier.height(dimensions.standard))
-                    DropdownContainer(
+                    CityAutocompleteField(
+                        query = state.citySearchQuery,
+                        onQueryChange = events.onCityQueryChange,
+                        results = state.citySearchResults,
+                        onCitySelect = events.onCitySelected,
                         label = stringResource(R.string.city),
-                        options = SUPPORTED_CITIES,
-                        selectedOptions = if (state.city.isEmpty()) emptyList() else listOf(state.city),
-                        onOptionClick = { events.onCityChange(it as String) },
-                        optionLabel = { it as String },
-                        isMultiSelect = false,
-                        leadingIcon = painterResource(R.drawable.location_icon)
+                        leadingIcon = painterResource(R.drawable.location_icon),
+                        onSearchClick = events.onSearchClick
                     )
                     HorizontalDivider(
                         thickness = dimensions.tiny,
@@ -151,12 +170,27 @@ fun FilterSelectionContent(
                 }
             }
         }
-        PrimaryButton(
-            text = stringResource(R.string.save),
-            onClick = { events.onSave(state) },
-            modifier = Modifier.padding(top = dimensions.standard).fillMaxWidth(0.9f),
-            textPadding = dimensions.small
-        )
+        Column(
+            modifier = Modifier.padding(vertical = dimensions.standard),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            PrimaryButton(
+                text = stringResource(R.string.save),
+                onClick = { events.onSave(state) },
+                modifier = Modifier.fillMaxWidth(0.9f),
+                textPadding = dimensions.small
+            )
+
+            if (hasActiveFilters) {
+                Spacer(modifier = Modifier.height(dimensions.small))
+                SecondaryButton(
+                    text = stringResource(R.string.clear_filters),
+                    onClick = events.onClearFilters,
+                    modifier = Modifier.fillMaxWidth(0.9f).padding(top = dimensions.small),
+                    textPadding = dimensions.little
+                )
+            }
+        }
     }
 }
 
@@ -170,7 +204,7 @@ fun FilterSelectionPreview() {
         ) {
             val state = FilterSelectionState()
             val events = FilterSelectionEvents(
-                {}, {}, {}, {}, {}, {}
+                {}, {}, {}, {}, {}, {},  {}, {}, {}, {}
             )
             FilterSelectionContent(state = state, events = events)
         }

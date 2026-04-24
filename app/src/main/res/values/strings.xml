@@ -119,4 +119,18 @@
     <string name="match">Match!</string>
     <string name="Reload">Actualizar</string>
     <string name="greeting">"Saluda!"</string>
+    <string name="recover_password">Recuperar contraseña</string>
+    <string name="reset_password">Restaurar contraseña</string>
+    <string name="reset_code">Código de recuperación</string>
+    <string name="confirm_changes">Confirmar cambios</string>
+    <string name="error_incorrect_code">Código de restauración incorrecto</string>
+    <string name="recover_password_desc">¿Has olvidado tu contraseña? Escribe aquí tu correo electrónico y te enviaremos un código de recuperación.</string>
+    <string name="saving">Guardando</string>
+    <string name="login_loading">Iniciando sesión</string>
+    <string name="search_city">Buscar una ciudad</string>
+    <string name="new_match">¡Nuevo Match!</string>
+    <string name="new_match_desc">Alguien está intersado en tu casa</string>
+    <string name="new_message">Nuevo mensaje</string>
+    <string name="new_message_desc">Alguien te habla</string>
+    <string name="clear_filters">Borrar filtros</string>
 </resources>

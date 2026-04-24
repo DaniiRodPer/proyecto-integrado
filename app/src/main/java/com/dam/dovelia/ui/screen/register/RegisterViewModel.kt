@@ -24,7 +24,6 @@ class RegisterViewModel @Inject constructor(
         viewModelScope.launch {
             val localValid = validateFields()
             if (!localValid) return@launch
-
             state = state.copy(isLoading = true)
 
             when (val result = userRepository.isEmailAvailable(state.email)) {

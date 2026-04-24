@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -95,7 +96,7 @@ fun RegisterContent(
                 .background(Color.Black.copy(alpha = 0.3f))
         )
         Column(
-            Modifier.fillMaxSize().statusBarsPadding(),
+            Modifier.fillMaxSize().statusBarsPadding().imePadding(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Title(
@@ -188,6 +189,8 @@ fun RegisterContent(
                     PrimaryButton(
                         stringResource(R.string.register_title),
                         events.onRegister,
+                        loadingText = stringResource(R.string.loading),
+                        isLoading = state.isLoading,
                         modifier = Modifier.padding(top = dimensions.extraBig)
                     )
                     Box(

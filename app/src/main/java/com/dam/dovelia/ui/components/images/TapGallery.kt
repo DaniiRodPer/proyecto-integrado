@@ -32,6 +32,7 @@ import com.dam.dovelia.ui.common.LocalDimensions
 import com.dam.dovelia.ui.theme.ProydrpTheme
 import kotlinx.coroutines.launch
 import com.dam.dovelia.R
+import com.dam.dovelia.ui.utils.toFullImageUrl
 
 @Composable
 fun Indicator(isActive: Boolean, modifier: Modifier) {
@@ -60,7 +61,7 @@ fun TapGallery(
     LaunchedEffect(urls) {
         urls.forEach { url ->
             val request = ImageRequest.Builder(context)
-                .data(url)
+                .data(toFullImageUrl(url))
                 .memoryCachePolicy(CachePolicy.ENABLED)
                 .build()
             context.imageLoader.enqueue(request)
@@ -70,7 +71,6 @@ fun TapGallery(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .aspectRatio(3f / 4f)
             .clip(RoundedCornerShape(dimensions.big))
     ) {
         HorizontalPager(
@@ -79,7 +79,7 @@ fun TapGallery(
             userScrollEnabled = false
         ) { page ->
             AsyncImage(
-                model = urls[page],
+                model = toFullImageUrl(urls[page]),
                 placeholder = painterResource(R.drawable.image_placeholder),
                 error = painterResource(R.drawable.image_placeholder),
                 contentDescription = null,

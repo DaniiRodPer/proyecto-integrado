@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -21,6 +23,8 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,6 +35,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -48,6 +56,27 @@ fun MainContainerScreen(navController: NavHostController, sessionManager: Sessio
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val dimensions = LocalDimensions.current
+
+    val mainViewModel: MainContainerViewModel = hiltViewModel()
+    val unreadUsers by mainViewModel.unreadUsers.collectAsState()
+    val hasUnread = unreadUsers.isNotEmpty()
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_START) {
+                mainViewModel.connectWebSocket()
+            } else if (event == Lifecycle.Event.ON_STOP) {
+                mainViewModel.disconnectWebSocket()
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     val showBottomBar = currentRoute in listOf(Routes.PROFILE, Routes.DISCOVER, Routes.MATCHLIST, Routes.OTHER_PROFILE)
 
@@ -153,11 +182,19 @@ fun MainContainerScreen(navController: NavHostController, sessionManager: Sessio
                         NavigationBarItem(
                             colors = navItemColors,
                             icon = {
-                                Icon(
-                                    painter = painterResource(R.drawable.match_icon),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(dimensions.big)
-                                )
+                                BadgedBox(
+                                    badge = {
+                                        if (hasUnread) {
+                                            Badge(containerColor = Color(0xFFA43535))
+                                        }
+                                    }
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.match_icon),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(dimensions.big)
+                                    )
+                                }
                             },
                             label = {
                                 Text(

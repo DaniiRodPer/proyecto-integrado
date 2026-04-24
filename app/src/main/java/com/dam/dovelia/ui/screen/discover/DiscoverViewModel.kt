@@ -28,25 +28,35 @@ class DiscoverViewModel @Inject constructor(
     private var currentCity: String? = null
     private var currentRooms: Int? = null
     private var currentBathrooms: Int? = null
+    private var currentTags: List<String>? = null
 
-    fun verifySessionAndLoad(city: String?, rooms: Int?, bathrooms: Int?, forceRefresh: Boolean = false) {
+    fun verifySessionAndLoad(
+        city: String?,
+        rooms: Int?,
+        bathrooms: Int?,
+        tags: List<String>?,
+        forceRefresh: Boolean = false
+    ) {
         viewModelScope.launch {
             val token = withContext(Dispatchers.IO) { sessionManager.getAuthToken() }
 
             val tokenChanged = token != loadedToken
-            val filtersChanged = city != currentCity || rooms != currentRooms || bathrooms != currentBathrooms
+            val filtersChanged =
+                city != currentCity || rooms != currentRooms || bathrooms != currentBathrooms || tags != currentTags
 
             if (tokenChanged || filtersChanged || forceRefresh) {
                 loadedToken = token
                 currentCity = city
                 currentRooms = rooms
                 currentBathrooms = bathrooms
+                currentTags = tags
 
-                loadUsers(city, rooms, bathrooms)
+                loadUsers(city, rooms, bathrooms, tags)
             }
         }
     }
-    fun loadUsers(city: String? = null, rooms: Int? = null, bathrooms: Int? = null) {
+
+    fun loadUsers(city: String? = null, rooms: Int? = null, bathrooms: Int? = null, tags: List<String>? = null) {
         viewModelScope.launch {
             state = DiscoverState.Loading
 
@@ -61,8 +71,7 @@ class DiscoverViewModel @Inject constructor(
                 return@launch
             }
 
-            when (val result = userRepository.getDiscoverUsers(token, city, rooms, bathrooms)) {
-                is BaseResult.Success -> {
+            when (val result = userRepository.getDiscoverUsers(token, city, rooms, bathrooms, tags)) {                is BaseResult.Success -> {
                     val users = result.data
                     state = if (users.isEmpty()) {
                         DiscoverState.NoData
@@ -112,7 +121,8 @@ class DiscoverViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            val token = withContext(Dispatchers.IO) { sessionManager.getAuthToken() } ?: return@launch
+            val token =
+                withContext(Dispatchers.IO) { sessionManager.getAuthToken() } ?: return@launch
 
             when (val result = userRepository.swipeUser(token, swipedUser.id, isLike)) {
                 is BaseResult.Success -> {

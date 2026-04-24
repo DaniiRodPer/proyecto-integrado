@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "554855269813",
+    "project_id": "dovelia",
+    "storage_bucket": "dovelia.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:554855269813:android:3fbb71e66f7c34ea1785fc",
+        "android_client_info": {
+          "package_name": "com.dam.dovelia"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "554855269813-e3kjqp4kg8640ned1gdhk4r3o57eub2c.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dam.dovelia",
+            "certificate_hash": "97c95c67e794eacd693229527b1a04c144e5d21b"
+          }
+        },
+        {
+          "client_id": "554855269813-rc3v30s8nh3f62j7bfoen0epjmrjlk8f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dam.dovelia",
+            "certificate_hash": "a4724832dcffe5c2498bf27c2f2f30c3de7164b6"
+          }
+        },
+        {
+          "client_id": "554855269813-sfhobfm3i9tbcrpav3af2pmfaq0ab92d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-Rl4qq0WWbuUImmAGjbBTtXyEwkHHj68"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "554855269813-sfhobfm3i9tbcrpav3af2pmfaq0ab92d.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

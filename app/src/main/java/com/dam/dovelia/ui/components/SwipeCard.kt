@@ -13,9 +13,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -39,6 +41,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -72,6 +75,7 @@ fun SwipeCard(
 ) {
     val dimensions = LocalDimensions.current
     val buttonsSize = dimensions.extraHuge
+    val fontScale = LocalDensity.current.fontScale
     var localSwipeProgress by remember { mutableFloatStateOf(0f) }
 
     val userTags = buildString {
@@ -88,6 +92,13 @@ fun SwipeCard(
             maxHeight < 800.dp -> 3
             else -> 4
         }
+
+        val dynamicMultiplier = (0.75f - (fontScale - 1f) * 0.25f).coerceIn(0.50f, 0.75f)
+
+        val galleryHeight = (maxHeight * dynamicMultiplier).coerceIn(
+            minimumValue = 380.dp,
+            maximumValue = 500.dp
+        )
 
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
             Box(
@@ -125,7 +136,11 @@ fun SwipeCard(
                                 ),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Box(modifier = Modifier.fillMaxSize()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .height(galleryHeight)
+                            ) {
                                 TapGallery(
                                     urls = userProfile.accommodation.picsUrls,
                                     city = userProfile.accommodation.city,

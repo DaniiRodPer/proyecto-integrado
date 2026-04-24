@@ -26,6 +26,7 @@ import coil.compose.AsyncImage
 import com.dam.dovelia.R
 import com.dam.dovelia.ui.common.LocalDimensions
 import com.dam.dovelia.ui.theme.ProydrpTheme
+import com.dam.dovelia.ui.utils.toFullImageUrl
 
 @Composable
 fun PhotoItem(
@@ -49,9 +50,11 @@ fun PhotoItem(
 
     imageModifier = imageModifier.clip(RoundedCornerShape(borderRadius))
 
+    val finalModel = if (model is String) toFullImageUrl(model) else model
+
     Box {
         AsyncImage(
-            model = model,
+            model = finalModel,
             placeholder = painterResource(R.drawable.image_placeholder),
             error = painterResource(R.drawable.image_placeholder),
             contentDescription = null,

@@ -31,6 +31,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.dam.dovelia.R
+import com.dam.dovelia.data.model.UserProfile
 import com.dam.dovelia.ui.common.LocalDimensions
 import com.dam.dovelia.ui.components.FloatingContainer
 import com.dam.dovelia.ui.components.buttons.GoogleButton
@@ -44,13 +45,17 @@ data class LoginEvents(
     val onEmailChange: (String) -> Unit,
     val onPasswodChange: (String) -> Unit,
     val onLogin: () -> Unit,
-    val onRegister: () -> Unit
+    val onRegister: () -> Unit,
+    val onGoogleLogin: (String) -> Unit,
+    val onForgotPassword: () -> Unit
 )
 
 @Composable
 fun LoginScreen(
     onRegister: () -> Unit,
-    onLogin: () -> Unit
+    onLogin: () -> Unit,
+    onNavigateToRegisterStep2: (UserProfile) -> Unit,
+    onForgotPassword: () -> Unit
 ) {
 
     val viewModel: LoginViewModel = hiltViewModel()
@@ -62,6 +67,14 @@ fun LoginScreen(
             viewModel.onLogin(onSuccess = onLogin)
         },
         onRegister = onRegister,
+        onGoogleLogin = { token ->
+            viewModel.onGoogleLogin(
+                idToken = token,
+                onSuccess = onLogin,
+                onNewUser = onNavigateToRegisterStep2
+            )
+        },
+        onForgotPassword = onForgotPassword
     )
 
     LoginContent(
@@ -155,14 +168,16 @@ fun LoginContent(
                             modifier = Modifier
                                 .padding(start = dimensions.big)
                                 .align(Alignment.Start)
-                                .combinedClickable(onClick = {})
+                                .combinedClickable(onClick = events.onForgotPassword)
                         )
                         PrimaryButton(
                             stringResource(R.string.login_title),
                             onClick = events.onLogin,
+                            loadingText = stringResource(R.string.login_loading),
+                            isLoading = state.isLoading,
                             modifier = Modifier.padding(top = dimensions.extraBig)
                         )
-                        GoogleButton(modifier = Modifier.padding(top = dimensions.standard))
+                        GoogleButton(modifier = Modifier.padding(top = dimensions.standard), events.onGoogleLogin)
                         Box(
                             Modifier
                                 .fillMaxWidth()
@@ -193,7 +208,7 @@ fun LoginScreenPreview() {
             color = MaterialTheme.colorScheme.background
         ) {
             val state = LoginState(email = "", password = "")
-            val events = LoginEvents({}, {}, {}, {})
+            val events = LoginEvents({}, {}, {}, {}, {}, {})
             LoginContent(state, events)
         }
     }

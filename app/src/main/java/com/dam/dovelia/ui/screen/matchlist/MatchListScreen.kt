@@ -12,6 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,6 +45,7 @@ fun MatchListScreen(
 ) {
     val viewModel: MatchListViewModel = hiltViewModel()
     val currentState = viewModel.state
+    val unreadUsers by viewModel.unreadUsers.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.loadMatches()
@@ -72,7 +74,7 @@ fun MatchListScreen(
         }
 
         is MatchListState.Success -> {
-            MatchListContent(scaffoldPadding, currentState, events)
+            MatchListContent(scaffoldPadding, currentState, events, unreadUsers)
         }
 
     }
@@ -84,6 +86,7 @@ fun MatchListContent(
     scaffoldPadding: PaddingValues,
     state: MatchListState.Success,
     events: MatchListEvents,
+    unreadUsers: Set<String>
 ) {
     val dimensions = LocalDimensions.current
     var deleteElement by remember { mutableStateOf<UserProfile?>(null) }
@@ -108,7 +111,7 @@ fun MatchListContent(
                     onChatClick = events.onChatClick,
                     onNavigate = { events.onProfileClick(userProfile.id) },
                     onDelete = events.onDelete,
-                    notification = false,
+                    notification = unreadUsers.contains(userProfile.id),
                     userProfile = userProfile
                 )
             }
@@ -142,7 +145,7 @@ fun MatchListScreenPreview() {
             val events = MatchListEvents({}, {}, {})
             val state = MatchListState.Success(mockUserProfileList)
 
-            MatchListContent(PaddingValues(), state, events)
+            MatchListContent(PaddingValues(), state, events, setOf())
         }
     }
 }

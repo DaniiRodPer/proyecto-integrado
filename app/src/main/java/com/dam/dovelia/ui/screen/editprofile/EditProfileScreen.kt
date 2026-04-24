@@ -3,6 +3,7 @@ package com.dam.dovelia.ui.screen.editprofile
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,7 +29,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -37,7 +40,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.dam.dovelia.R
 import com.dam.dovelia.data.model.AccommodationTag
-import com.dam.dovelia.data.model.SUPPORTED_CITIES
+import com.dam.dovelia.data.model.CityResult
 import com.dam.dovelia.data.model.UserProfile
 import com.dam.dovelia.data.model.UserTag
 import com.dam.dovelia.ui.common.LocalDimensions
@@ -48,6 +51,7 @@ import com.dam.dovelia.ui.components.buttons.PrimaryButton
 import com.dam.dovelia.ui.components.images.HorizontalPhotoSelector
 import com.dam.dovelia.ui.components.images.ProfilePic
 import com.dam.dovelia.ui.components.pickers.CheckBoxField
+import com.dam.dovelia.ui.components.pickers.CityAutocompleteField
 import com.dam.dovelia.ui.components.pickers.DatePickerField
 import com.dam.dovelia.ui.components.pickers.DropdownContainer
 import com.dam.dovelia.ui.components.pickers.NumberStepField
@@ -64,7 +68,9 @@ import java.time.LocalDate
 
 data class EditProfileEvents(
     val onBirthDateChange: (LocalDate?) -> Unit,
-    val onCityChange: (String) -> Unit,
+    val onCityQueryChange: (String) -> Unit,
+    val onSearchCityClick: () -> Unit,
+    val onCitySelected: (CityResult) -> Unit,
     val onUserDescriptionChange: (String) -> Unit,
     val onAccommodationDescriptionChange: (String) -> Unit,
     val onRoomsChange: (Int) -> Unit,
@@ -129,7 +135,9 @@ fun EditProfileScreen(
 
     val events = EditProfileEvents(
         onBirthDateChange = viewModel::onBirthDayChange,
-        onCityChange = viewModel::onCityChange,
+        onCityQueryChange = viewModel::onCityQueryChange,
+        onSearchCityClick = viewModel::searchCities,
+        onCitySelected = viewModel::onCitySelected,
         onUserDescriptionChange = viewModel::onUserDescriptionChange,
         onAccommodationDescriptionChange = viewModel::onAccommodationDescriptionChange,
         onRoomsChange = viewModel::onRoomsChange,
@@ -206,10 +214,16 @@ fun EditProfileContent(
     val dimensions = LocalDimensions.current
     var activeDialog by remember { mutableStateOf<DialogConfig?>(null) }
     var itemToDelete by remember { mutableStateOf<Any?>(null) }
+    val focusManager = LocalFocusManager.current
 
     Column(
         Modifier
-            .fillMaxSize(),
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = {
+                    focusManager.clearFocus()
+                })
+            },
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Row(
@@ -222,7 +236,8 @@ fun EditProfileContent(
                     horizontal = dimensions.large
                 )
         ) {
-            val profilePicModel = state.pendingProfilePicUpload ?: state.userPicUrl.takeIf { it.isNotBlank() }
+            val profilePicModel =
+                state.pendingProfilePicUpload ?: state.userPicUrl.takeIf { it.isNotBlank() }
 
             ProfilePic(
                 model = profilePicModel,
@@ -261,13 +276,13 @@ fun EditProfileContent(
                         isError = state.birthDateIsError,
                         errorText = state.birthDateError?.let { stringResource(it) } ?: ""
                     )
-                    DropdownContainer(
+                    CityAutocompleteField(
+                        query = state.citySearchQuery,
+                        onQueryChange = events.onCityQueryChange,
+                        results = state.citySearchResults,
+                        onCitySelect = events.onCitySelected,
+                        onSearchClick = events.onSearchCityClick,
                         label = stringResource(R.string.city),
-                        options = SUPPORTED_CITIES,
-                        selectedOptions = if (state.city.isEmpty()) emptyList() else listOf(state.city),
-                        onOptionClick = { events.onCityChange(it as String) },
-                        optionLabel = { it as String },
-                        isMultiSelect = false,
                         leadingIcon = painterResource(R.drawable.location_icon),
                         isError = state.cityIsError,
                         errorText = state.cityError?.let { stringResource(it) } ?: ""
@@ -290,7 +305,8 @@ fun EditProfileContent(
                         label = stringResource(R.string.description),
                         singleLine = false,
                         isError = state.userDescriptionIsError,
-                        errorText = state.userDescriptionError?.let { stringResource(it) } ?: ""
+                        errorText = state.userDescriptionError?.let { stringResource(it) } ?: "",
+                        maxLength = 150
                     )
                     TextField(
                         text = state.accommodationDescription,
@@ -299,7 +315,8 @@ fun EditProfileContent(
                         singleLine = false,
                         isError = state.accommodationDescriptionIsError,
                         errorText = state.accommodationDescriptionError?.let { stringResource(it) }
-                            ?: ""
+                            ?: "",
+                        maxLength = 1000
                     )
                     HorizontalDivider(
                         thickness = dimensions.tiny,
@@ -410,8 +427,9 @@ fun EditProfileContent(
             text = stringResource(
                 if (isRegisterMode) R.string.register else R.string.save
             ),
+            loadingText = stringResource(R.string.saving),
             onClick = onSave,
-            enabled = !state.isSaving,
+            isLoading = state.isSaving,
             modifier = Modifier
                 .padding(top = dimensions.standard)
                 .fillMaxWidth(0.9f),
@@ -443,7 +461,7 @@ fun EditProfilePreview() {
         ) {
             val state = EditProfileState.Success(name = "María del carmen Rodriguez Mérida")
             val events = EditProfileEvents(
-                {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}
+                {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}
             )
             EditProfileContent(
                 state = state,

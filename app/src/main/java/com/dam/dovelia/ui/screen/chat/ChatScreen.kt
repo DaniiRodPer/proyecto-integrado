@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -44,6 +45,12 @@ fun ChatScreen(
 
     LaunchedEffect(targetUserId) {
         viewModel.initChat(targetUserId)
+    }
+
+    DisposableEffect(targetUserId) {
+        onDispose {
+            viewModel.leaveChat()
+        }
     }
 
     val events = ChatEvents(

@@ -36,6 +36,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.dam.dovelia.R
 import com.dam.dovelia.data.mock.mockUserProfileList
 import com.dam.dovelia.data.model.UserProfile
+import com.dam.dovelia.permissions.AppPermissions
 import com.dam.dovelia.ui.common.LocalDimensions
 import com.dam.dovelia.ui.components.AnimationComponent
 import com.dam.dovelia.ui.components.FloatingContainer
@@ -43,6 +44,7 @@ import com.dam.dovelia.ui.components.TagList
 import com.dam.dovelia.ui.components.images.HorizontalGallery
 import com.dam.dovelia.ui.components.images.ProfilePic
 import com.dam.dovelia.ui.components.text.Title
+import com.dam.dovelia.ui.helper.rememberPermissionsLauncher
 import com.dam.dovelia.ui.theme.ProydrpTheme
 import com.dam.dovelia.ui.utils.getUserTagLabel
 
@@ -58,8 +60,17 @@ fun ProfileScreen(
     val viewModel: ProfileViewModel = hiltViewModel()
     val currentState: ProfileState = viewModel.state
 
+    val requestNotificationPermission = rememberPermissionsLauncher(
+        permissions = listOf(AppPermissions.Notifications),
+        onAllGranted = {},
+        onDenied = {}
+    )
+
     LaunchedEffect(Unit) {
         viewModel.loadUser(targetUserId)
+        if (targetUserId == null) {
+            requestNotificationPermission()
+        }
     }
 
     val events = ProfileEvents(

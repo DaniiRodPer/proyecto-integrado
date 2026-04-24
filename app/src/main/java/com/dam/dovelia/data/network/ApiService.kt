@@ -1,5 +1,7 @@
 package com.dam.dovelia.data.network
 
+import com.dam.dovelia.data.model.GeocodingResponse
+import com.dam.dovelia.data.model.GoogleAuthResponse
 import com.dam.dovelia.data.model.LoginRequest
 import com.dam.dovelia.data.model.Message
 import com.dam.dovelia.data.model.MessageCreate
@@ -44,9 +46,9 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Query("city") city: String? = null,
         @Query("rooms") rooms: Int? = null,
-        @Query("bathrooms") bathrooms: Int? = null
+        @Query("bathrooms") bathrooms: Int? = null,
+        @Query("tags") tags: List<String>? = null
     ): Response<List<UserProfile>>
-
     @GET("matches")
     suspend fun getMatches(@Header("Authorization") token: String): Response<List<UserProfile>>
 
@@ -56,8 +58,22 @@ interface ApiService {
         @Path("other_user_id") otherUserId: String
     ): Response<List<Message>>
 
+    @GET("https://geocoding-api.open-meteo.com/v1/search")
+    suspend fun searchCity(
+        @Query("name") name: String,
+        @Query("count") count: Int = 5,
+        @Query("language") language: String = "es",
+        @Query("format") format: String = "json"
+    ): Response<GeocodingResponse>
+
+    @GET("/users/unread-status")
+    suspend fun getUnreadStatus(@Header("Authorization") token: String): retrofit2.Response<List<String>>
+
     @POST("login")
     suspend fun loginUser(@Body request: LoginRequest): Response<TokenResponse>
+
+    @POST("auth/google")
+    suspend fun googleLogin(@Body request: Map<String, String>): Response<GoogleAuthResponse>
 
     @POST("users/")
     suspend fun registerUser(@Body user: UserProfile): Response<TokenResponse>
@@ -80,12 +96,24 @@ interface ApiService {
         @Body message: MessageCreate
     ): Response<Message>
 
+    @POST("users/recover-request")
+    suspend fun requestRecoveryPin(@Body request: Map<String, String>): Response<Map<String, String>>
+
+    @POST("users/reset-password")
+    suspend fun resetPassword(@Body request: Map<String, String>): Response<Map<String, String>>
+
     @PUT("users/{user_id}")
     suspend fun updateUser(
         @Header("Authorization") token: String,
         @Path("user_id") userId: String,
         @Body userUpdate: UserProfile
     ): Response<UserProfile>
+
+    @PUT("/messages/mark-read/{sender_id}")
+    suspend fun markMessagesAsRead(
+        @Header("Authorization") token: String,
+        @Path("sender_id") senderId: String
+    ): retrofit2.Response<Unit>
 
     @DELETE("upload/image/{filename}")
     suspend fun deleteImage(

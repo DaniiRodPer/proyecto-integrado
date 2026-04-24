@@ -1,6 +1,7 @@
 package com.dam.dovelia.ui.screen.editprofile
 
 import com.dam.dovelia.data.model.AccommodationTag
+import com.dam.dovelia.data.model.CityResult
 import com.dam.dovelia.data.model.UserTag
 import java.io.File
 import java.time.LocalDate
@@ -31,6 +32,9 @@ sealed class EditProfileState {
         val city: String = "",
         val cityIsError: Boolean = false,
         val cityError: Int? = null,
+
+        val citySearchQuery: String = "",
+        val citySearchResults: List<CityResult> = emptyList(),
 
         val userDescription: String = "",
         val userDescriptionIsError: Boolean = false,

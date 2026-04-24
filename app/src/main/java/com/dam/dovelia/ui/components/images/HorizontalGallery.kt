@@ -14,10 +14,16 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import coil.imageLoader
+import coil.request.CachePolicy
+import coil.request.ImageRequest
+import com.dam.dovelia.ui.utils.toFullImageUrl
 
 @Composable
 fun HorizontalGallery(
@@ -26,8 +32,20 @@ fun HorizontalGallery(
     modifier: Modifier = Modifier
 ) {
     val dimensions = LocalDimensions.current
+    val context = LocalContext.current
 
     if (urls.isEmpty()) return
+
+    LaunchedEffect(urls) {
+        urls.forEach { url ->
+            val request = ImageRequest.Builder(context)
+                .data(toFullImageUrl(url))
+                .memoryCachePolicy(CachePolicy.ENABLED)
+                .diskCachePolicy(CachePolicy.ENABLED)
+                .build()
+            context.imageLoader.enqueue(request)
+        }
+    }
 
     val calculatedWidth = height * (3f / 4f)
 
@@ -49,7 +67,7 @@ fun HorizontalGallery(
             contentPadding = PaddingValues(horizontal = horizontalPadding),
             pageSpacing = dimensions.standard,
             pageSize = PageSize.Fixed(calculatedWidth),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) { page ->
             val index = page % urls.size
 

@@ -1,5 +1,7 @@
 package com.dam.dovelia.ui.components.text
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -7,6 +9,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -38,7 +42,10 @@ fun TextField(
     singleLine: Boolean = true,
     readOnly: Boolean = false,
     keyboardType: KeyboardType = KeyboardType.Text,
-    trailingText: String? = null
+    trailingText: String? = null,
+    trailingIcon: Int? = null,
+    trailingIconAction: () -> Unit = {},
+    maxLength: Int? = null
 ) {
 
     val dimensions = LocalDimensions.current
@@ -89,16 +96,53 @@ fun TextField(
                     modifier = modifier.padding(end = dimensions.large)
                 )
             }
+        } else if (trailingIcon != null) {
+            {
+                IconButton(
+                    onClick = trailingIconAction,
+                    modifier = Modifier.padding(end = dimensions.small),
+                    colors = IconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        disabledContainerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.background,
+                        disabledContentColor = MaterialTheme.colorScheme.background
+                    )
+                ) {
+                    Icon(
+                        painterResource(trailingIcon),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.background
+                    )
+                }
+            }
         } else
             null,
 
         supportingText = {
-            if (isError && errorText.isNotEmpty()) {
-                Text(
-                    text = errorText,
-                    color = MaterialTheme.colorScheme.error,
-                    fontSize = 12.sp
-                )
+            val hasError = isError && errorText.isNotEmpty()
+
+            if (hasError || maxLength != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = if (hasError) Arrangement.SpaceBetween else Arrangement.End
+                ) {
+                    if (hasError) {
+                        Text(
+                            text = errorText,
+                            color = MaterialTheme.colorScheme.error,
+                            fontSize = 12.sp,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    if (maxLength != null) {
+                        Text(
+                            text = "${text.length} / $maxLength",
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(start = dimensions.small)
+                        )
+                    }
+                }
             }
         },
 
@@ -120,6 +164,7 @@ fun TextFieldPreview() {
                 onChange = {},
                 label = stringResource(R.string.email_address),
                 icon = painterResource(id = R.drawable.email_icon),
+                trailingIcon = R.drawable.search_icon
             )
         }
     }

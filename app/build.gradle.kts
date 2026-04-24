@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.kapt)
     alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -111,4 +112,9 @@ dependencies {
 
     //SplashScreen
     implementation(libs.androidx.core.splashscreen)
+
+    //Ventana de inicio de sesión con google
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services)
+    implementation(libs.googleid)
 }

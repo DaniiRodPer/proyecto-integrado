@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dam.dovelia.R
 import com.dam.dovelia.data.model.LoginRequest
+import com.dam.dovelia.data.model.UserProfile
 import com.dam.dovelia.data.network.BaseResult
 import com.dam.dovelia.data.network.SessionManager
 import com.dam.dovelia.data.repository.UserRepository
@@ -24,6 +25,7 @@ class LoginViewModel @Inject constructor(
         private set
 
     fun onLogin(onSuccess: () -> Unit) {
+        state = state.copy(isLoading = true, credentialsIsError = false)
         viewModelScope.launch {
             val request = LoginRequest(state.email, state.password)
 
@@ -33,6 +35,39 @@ class LoginViewModel @Inject constructor(
                     sessionManager.saveAuthToken(body.access_token)
                     sessionManager.saveUserId(body.user_id)
                     onSuccess()
+                }
+                is BaseResult.Error -> {
+                    state = state.copy(
+                        isLoading = false,
+                        credentialsIsError = true,
+                        credentialsError = R.string.login_error
+                    )
+                }
+            }
+        }
+    }
+
+    fun onGoogleLogin(
+        idToken: String,
+        onSuccess: () -> Unit,
+        onNewUser: (UserProfile) -> Unit
+    ) {
+        viewModelScope.launch {
+            when (val result = userRepository.loginWithGoogle(idToken)) {
+                is BaseResult.Success -> {
+                    val body = result.data
+                    if (body.is_new_user) {
+                        val partialUser = UserProfile(
+                            name = body.name ?: "",
+                            surname = body.surname ?: "",
+                            email = body.email ?: "",
+                        )
+                        onNewUser(partialUser)
+                    } else {
+                        sessionManager.saveAuthToken(body.access_token!!)
+                        sessionManager.saveUserId(body.user_id!!)
+                        onSuccess()
+                    }
                 }
                 is BaseResult.Error -> {
                     state = state.copy(

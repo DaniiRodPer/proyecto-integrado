@@ -8,9 +8,11 @@ import androidx.lifecycle.viewModelScope
 import com.dam.dovelia.R
 import com.dam.dovelia.data.model.Accommodation
 import com.dam.dovelia.data.model.AccommodationTag
+import com.dam.dovelia.data.model.CityResult
 import com.dam.dovelia.data.model.UserProfile
 import com.dam.dovelia.data.model.UserTag
 import com.dam.dovelia.data.network.BaseResult
+import com.dam.dovelia.data.network.RetrofitClient.apiService
 import com.dam.dovelia.data.network.SessionManager
 import com.dam.dovelia.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -214,7 +216,8 @@ class EditProfileViewModel @Inject constructor(
                         squareMeters = user.accommodation?.squareMeters?.toString() ?: "",
                         accommodationTags = user.accommodation?.tags ?: emptyList(),
                         accommodationPicsUrls = user.accommodation?.picsUrls ?: emptyList(),
-                        city = user.accommodation?.city ?: ""
+                        city = user.accommodation?.city ?: "",
+                        citySearchQuery =  user.accommodation?.city ?: ""
                     )
                 }
 
@@ -290,24 +293,65 @@ class EditProfileViewModel @Inject constructor(
         }
     }
 
-    fun onCityChange(newVal: String) {
-        val currentState = state
-        if (currentState is EditProfileState.Success) {
-            state = currentState.copy(city = newVal)
+    fun onCityQueryChange(newQuery: String) {
+        val currentState = state as? EditProfileState.Success ?: return
+        state = currentState.copy(citySearchQuery = newQuery)
+    }
+
+    fun searchCities() {
+        val currentState = state as? EditProfileState.Success ?: return
+        if (currentState.citySearchQuery.length < 2) return
+
+        viewModelScope.launch {
+            try {
+                val response = apiService.searchCity(name = currentState.citySearchQuery)
+                if (response.isSuccessful) {
+                    val current = state as? EditProfileState.Success ?: return@launch
+                    state = current.copy(citySearchResults = response.body()?.results ?: emptyList())
+                }
+            } catch (e: Exception) {
+                val current = state as? EditProfileState.Success ?: return@launch
+                state = current.copy(citySearchResults = emptyList())
+            }
+        }
+    }
+
+    fun onCitySelected(city: CityResult) {
+        val currentState = state as? EditProfileState.Success ?: return
+
+        state = if (city.id != -1) {
+            val fullLocationName = listOfNotNull(
+                city.name,
+                city.admin1.takeIf { !it.isNullOrBlank() },
+                city.country
+            ).joinToString(", ")
+
+            currentState.copy(
+                city = fullLocationName,
+                citySearchQuery = fullLocationName,
+                citySearchResults = emptyList(),
+                cityIsError = false,
+                cityError = null
+            )
+        } else {
+            currentState.copy(citySearchResults = emptyList())
         }
     }
 
     fun onUserDescriptionChange(newVal: String) {
         val currentState = state
         if (currentState is EditProfileState.Success) {
-            state = currentState.copy(userDescription = newVal)
+            if (newVal.length <= 150) {
+                state = currentState.copy(userDescription = newVal)
+            }
         }
     }
-
     fun onAccommodationDescriptionChange(newVal: String) {
         val currentState = state
         if (currentState is EditProfileState.Success) {
-            state = currentState.copy(accommodationDescription = newVal)
+            if (newVal.length <= 1000) {
+                state = currentState.copy(accommodationDescription = newVal)
+            }
         }
     }
 
@@ -332,10 +376,11 @@ class EditProfileViewModel @Inject constructor(
                 state = currentState.copy(squareMeters = newVal)
                 return
             }
-            try {
-                newVal.toInt()
-                state = currentState.copy(squareMeters = newVal)
-            } catch (_: NumberFormatException) {
+            if (newVal.length <= 5) {
+                try {
+                    newVal.toInt()
+                    state = currentState.copy(squareMeters = newVal)
+                } catch (_: NumberFormatException) {}
             }
         }
     }

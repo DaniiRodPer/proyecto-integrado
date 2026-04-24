@@ -1,14 +1,15 @@
 package com.dam.dovelia.data.model
 
-val SUPPORTED_CITIES = listOf(
-    "Madrid",
-    "Barcelona",
-    "Valencia",
-    "Sevilla",
-    "Zaragoza",
-    "Málaga",
-    "Murcia",
-    "Palma",
-    "Las Palmas de Gran Canaria",
-    "Bilbao"
+data class GeocodingResponse(
+    val results: List<CityResult>?
 )
+
+data class CityResult(
+    val id: Int,
+    val name: String,
+    val admin1: String?,
+    val country: String
+) {
+    val displayName: String
+        get() = listOfNotNull(name, admin1, country).joinToString(", ")
+}

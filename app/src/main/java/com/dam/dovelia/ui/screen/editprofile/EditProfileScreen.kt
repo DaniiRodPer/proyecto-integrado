@@ -84,6 +84,26 @@ data class EditProfileEvents(
     val onGoToBack: () -> Unit
 )
 
+/**
+ * Función EditProfileScreen:
+ * Se encarga de inicializar el estado de la pantalla ya sea para editar
+ * el perfil actual o para completar el registro de un nuevo usario.
+ *
+ * Configura los launchers para la selección de fotos tanto de la galeria
+ * de la casa como de la foto de perifl principal.
+ *
+ * * - Cargando -> Animación de carga con lottie.
+ * * - Error -> Animación de error si no se pueden obtener datos.
+ * * - Éxito -> Muestra el formulario completo en EditProfileContent.
+ *
+ * @param userData - Datos del usuario si estamos en modo edición.
+ * @param isRegisterMode - Indica si venimos de la pantalla de registro.
+ * @param onGoToBack - Evento para volver a la pantalla anterior.
+ * @param onRegisterSuccess - se ejecuta cuando el registro termina bien.
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @Composable
 fun EditProfileScreen(
     userData: UserProfile? = null,
@@ -198,7 +218,27 @@ fun EditProfileScreen(
     }
 }
 
-
+/**
+ * Función EditProfileContent:
+ * Representa toda la interfaz del formulario de edición y registro.
+ * Incluye la gestión de fotos, datos personales y carateristicas del alojamiento.
+ *
+ * Implementa un verticalScroll para que el usaurio pueda navegar por todas
+ * las secciones y usa un FloatingContainer para que el diseño sea mas limpio.
+ *
+ * Tambien gestiona los dialogos de confirmación para borrar fotos y valida
+ * que no se seleccionen mas de 9 etiquetas por casa.
+ *
+ * @param state - Estado de éxito con toda la info del formulario.
+ * @param events
+ * @param isRegisterMode - Cambia el texto del botón según el modo.
+ * @param onAddPhotoClick - Lanza el selector de fotos de la vivienda.
+ * @param onProfilePhotoClick - Lanza el selector de foto de perfil.
+ * @param onSave - Ejecuta la acción de guardado o registro fnal.
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @Composable
 fun EditProfileContent(
     state: EditProfileState,

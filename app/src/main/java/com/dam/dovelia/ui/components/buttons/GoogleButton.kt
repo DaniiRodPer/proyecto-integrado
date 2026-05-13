@@ -34,6 +34,21 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.launch
 
+
+/**
+ * Componente GoogleButton:
+ * Botón personalizado que integra la autenticación nativa de google de Android mediante el Credential Manager.
+ * Permite a los usuarios iniciar sesion de forma rapida usando sus cuentas de Google vinculadas al dispositivo.
+ *
+ * * Implementa el uso de corrutinas para gestionar la peticion de credenciales de forma asíncrona sin bloquear la interfaz de usaurio.
+ * Una vez obtenida la identidad, extrae el ID Token necesario para que el servidor pueda validar la autenticidad de la cuenta.
+ *
+ * @param onTokenReceived - devuelve el token de Google al ViewModel.
+ * @param modifier
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @Composable
 fun GoogleButton(
     modifier: Modifier = Modifier,

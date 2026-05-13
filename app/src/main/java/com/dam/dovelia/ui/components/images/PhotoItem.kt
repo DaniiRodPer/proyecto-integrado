@@ -28,6 +28,22 @@ import com.dam.dovelia.ui.common.LocalDimensions
 import com.dam.dovelia.ui.theme.ProydrpTheme
 import com.dam.dovelia.ui.utils.toFullImageUrl
 
+/**
+ * Componente PhotoItem:
+ * Iagen individual que se usa en galerías y selectores.
+ * Gestiona la carga de imágenes de forma asíncrona mediante Coil y permite aplicar bordes redondeados
+ *
+ * Tiene una opción para mostrar un botón de borrado por encima en una esquina para permitir al usuario
+ * borrar fotos en el componente de selector de fotos horizontal
+ *
+ * @param model - Fuente de la imagen que puede ser URL, File o URI
+ * @param borderRadius - Radio de curvatura para las esquinas de la foto.
+ * @param showDelete - Para habilitar el icono de eliminar.
+ * @param onDeleteClick - evento que se ejecuta al pulsar el boton de borrar.
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @Composable
 fun PhotoItem(
     model: Any,

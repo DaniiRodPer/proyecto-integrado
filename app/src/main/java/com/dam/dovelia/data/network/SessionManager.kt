@@ -56,4 +56,12 @@ class SessionManager @Inject constructor(context: Context) {
     fun isUserLoggedIn(): Boolean {
         return getAuthToken() != null
     }
+
+    fun areTermsAccepted(): Boolean {
+        return sharedPreferences.getBoolean("terms_accepted", false)
+    }
+
+    fun setTermsAccepted(accepted: Boolean) {
+        sharedPreferences.edit().putBoolean("terms_accepted", accepted).apply()
+    }
 }

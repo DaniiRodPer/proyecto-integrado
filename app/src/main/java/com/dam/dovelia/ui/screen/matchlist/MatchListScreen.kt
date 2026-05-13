@@ -37,6 +37,25 @@ data class MatchListEvents(
     val onDelete: (UserProfile) -> Unit
 )
 
+/**
+ * Función MatchListScreen:
+ * Se encarga de coordinar la carga de la lista de personas con las que
+ * hemos hecho match y gestionar los distintos estados de la pantalla:
+ *
+ * * - Cargando -> Enseña la animación lottie de carga.
+ * * - Sin datos -> Muestra una animación de corazones indicando que aun no hay matches.
+ * * - Éxito -> Pinta el listado de usuarios llamando a MatchListContent.
+ *
+ * Tambien observa el estado de mensajes no leidos para poner el punto rojo
+ * en el usuario que nos haya escrito.
+ *
+ * @param scaffoldPadding - Padding para respetar las barras del sistema.
+ * @param onChatClick - Evento para abrir la pantalla de chat con un usaurio.
+ * @param onNavigateToProfile - Evento para ver el perfil detallado del match.
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @Composable
 fun MatchListScreen(
     scaffoldPadding: PaddingValues,
@@ -81,6 +100,19 @@ fun MatchListScreen(
 
 }
 
+/**
+ * Función MatchListContent:
+ * Muestra el listado de matches en un LazyColumn
+ * Cada elemento de la lista permite ir al chat o ver el perifl.
+ *
+ * @param scaffoldPadding - Espaciado para no pisar la navegacion inferior.
+ * @param state - Estado de exito con la lista de usuarios cargada.
+ * @param events - Eventos de click y chat.
+ * @param unreadUsers - Conjunto de IDs de usuarios con mensajes pendientes de leeer.
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @Composable
 fun MatchListContent(
     scaffoldPadding: PaddingValues,

@@ -19,8 +19,22 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import java.io.File
 import java.time.LocalDate
+import java.util.UUID
 import javax.inject.Inject
 
+/**
+ * Clase EditProfileViewModel:
+ * Se encarga de toda la lógica de negocio para la edición de perfil y el
+ * proceso de registro final de los usuarios en la plataforma.
+ * * Gestiona la subida de imagenes al servidor, la validación de todos los
+ * campos obligatorios y la persistencia de los datos en la base de datos.
+ *
+ * @property userRepository
+ * @property sessionManager
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @HiltViewModel
 class EditProfileViewModel @Inject constructor(
     private val userRepository: UserRepository,
@@ -33,6 +47,14 @@ class EditProfileViewModel @Inject constructor(
     private var isRegisterMode: Boolean = false
     private var userData: UserProfile? = null
 
+
+    /**
+     * Función start:
+     * Inicializa el ViewModel configurando si estamos en modo registro o edición.
+     * Si es un registro, prepara el estado con los datos basicos recibidos.
+     * @param userData - Información previa del usuario.
+     * @param isRegister - Flag para saber si es un nuevo registro.
+     */
     fun start(userData: UserProfile?, isRegister: Boolean) {
         this.userData = userData
         this.isRegisterMode = isRegister
@@ -48,6 +70,14 @@ class EditProfileViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Función onSave:
+     * Procesa el guardado de los cambios realizados. Primero valida que no falte  datos y luego sube las fotos pendientes antes
+     * de actualizar el perfil.
+     * Si el registro es correcto, guarda el token de sesion y ejecuta el callback de éxito para navegar a la siguiente pantalla.
+     *
+     * @param onSuccess - Callback que se ejecuta tras un guardado exitoso.
+     */
     fun onSave(onSuccess: () -> Unit) {
         viewModelScope.launch {
             val currentState = state as? EditProfileState.Success ?: return@launch
@@ -83,7 +113,7 @@ class EditProfileViewModel @Inject constructor(
                 )
 
                 val finalUser = userData?.copy(
-                    id = java.util.UUID.randomUUID().toString(),
+                    id = UUID.randomUUID().toString(),
                     name = currentState.name,
                     profilePicUrl = finalProfilePicUrl,
                     surname = currentState.surname,
@@ -195,6 +225,11 @@ class EditProfileViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Función loadProfile:
+     * Recupera la información completa del perfil del usuario logueado actualmente
+     * para rellenar el formulario de edicion inicialmente.
+     */
     private fun loadProfile() {
         viewModelScope.launch {
             state = EditProfileState.Loading
@@ -243,6 +278,14 @@ class EditProfileViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Función validateFields:
+     * Comprueba que todos los campos obligatorios esten rellenos correctamente.
+     * Verifica ciudad, descripciones, metros cuadrados y numero mínimo de fotos.
+     * * Si hay errores, actualiza el estado para que la interfaz muetsra los avisos
+     * correspondientes en cada campo.
+     * @return True si todos los datos cumplen los requisitos mínimos.
+     */
     private fun validateFields(): Boolean {
         val currentState = state as? EditProfileState.Success ?: return false
 
@@ -298,6 +341,12 @@ class EditProfileViewModel @Inject constructor(
         state = currentState.copy(citySearchQuery = newQuery)
     }
 
+
+    /**
+     * Función searchCities:
+     * Utiliza la API de geolocalización para buscar ciudades segun el texto
+     * introducido por el usaurio en el campo de búsqueda.
+     */
     fun searchCities() {
         val currentState = state as? EditProfileState.Success ?: return
         if (currentState.citySearchQuery.length < 2) return
@@ -316,6 +365,12 @@ class EditProfileViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Función onCitySelected:
+     * Gestiona la selección de una ciudad del listado de sugerencias.
+     * Formatea el nombre completo de la ubicación para mostrarlo en el fultro.
+     * * @param city - Objeto con los datos de la ciudad seleccionada.
+     */
     fun onCitySelected(city: CityResult) {
         val currentState = state as? EditProfileState.Success ?: return
 
@@ -369,6 +424,11 @@ class EditProfileViewModel @Inject constructor(
         }
     }
 
+
+    /**
+     * Función onSquareMetersChange:
+     * Controla que el campo de metros cuadrados solo admita numeros y que no supere una longitud maxima de 5 digitos
+     */
     fun onSquareMetersChange(newVal: String) {
         val currentState = state
         if (currentState is EditProfileState.Success) {
@@ -415,11 +475,24 @@ class EditProfileViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Función onProfilePhotoChanged:
+     * Marca una nueva foto de perfil para ser subida y guarda la URL de la
+     * foto anterior para borrarla del servidor si el guardado se confirma.
+     * @param file - Archivo de imagen seleccionado de la galeria.
+     */
     fun onProfilePhotoChanged(file: File) {
-        val currentState = state as? EditProfileState.Success ?: return
-        state = currentState.copy(
-            pendingProfilePicUpload = file,
-            pendingProfilePicDeletion = currentState.userPicUrl.ifBlank { currentState.pendingProfilePicDeletion }
-        )
+        val currentState = state
+        if (currentState is EditProfileState.Success) {
+            val deletionUrl = currentState.userPicUrl.ifBlank {
+                currentState.pendingProfilePicDeletion
+            }
+            state = currentState.copy(
+                pendingProfilePicUpload = file,
+                pendingProfilePicDeletion = deletionUrl
+            )
+        } else {
+            return
+        }
     }
 }

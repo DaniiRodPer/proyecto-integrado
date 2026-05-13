@@ -33,6 +33,7 @@ import com.dam.dovelia.ui.common.TopBarConfig
 import com.dam.dovelia.ui.components.CustomAlertDialog
 import com.dam.dovelia.ui.components.images.ProfilePic
 import com.dam.dovelia.ui.components.text.Title
+import com.dam.dovelia.ui.screen.AboutUsScreen
 import com.dam.dovelia.ui.screen.chat.ChatScreen
 import com.dam.dovelia.ui.screen.matchlist.MatchListScreen
 import com.dam.dovelia.ui.screen.discover.DiscoverScreen
@@ -55,6 +56,7 @@ object Routes {
     const val FILTERS = "filters"
     const val CHAT = "chat"
     const val RECOVER_PASSWORD = "recover_password"
+    const val ABOUT_US = "about_us"
 }
 
 data class DialogConfig(
@@ -75,7 +77,8 @@ fun NavHostScreen(
     scaffoldPadding: PaddingValues,
     topBarConfig: (TopBarConfig) -> Unit,
     sessionManager: SessionManager,
-    startDestination: String
+    startDestination: String,
+    onLogout: () -> Unit
     //onConfigureTopBar: (BaseTopAppBarState) -> Unit,
     //onOpenDrawer: () -> Unit,
     //onConfigureFab: (FloatingActionButtonState) -> Unit,
@@ -116,6 +119,7 @@ fun NavHostScreen(
                                 mode = true,
                                 onConfirm = {
                                     sessionManager.clearSession()
+                                    onLogout()
                                     activeDialog = null
                                     navController.navigate(Routes.LOGIN) {
                                         popUpTo(0) {
@@ -145,6 +149,8 @@ fun NavHostScreen(
                 topBarConfig(
                     TopBarConfig(
                         true,
+                        leadingIcon = R.drawable.info_icon,
+                        onLeadingClick = {navController.navigate(Routes.ABOUT_US)},
                         trailingIcon = R.drawable.sort_icon,
                         onTrailingClick = { navController.navigate(Routes.FILTERS) },
                         titleAlignment = TextAlign.Center,
@@ -235,6 +241,17 @@ fun NavHostScreen(
                                 )
                             }
                         }
+                    )
+                )
+            }
+
+            Routes.ABOUT_US -> {
+                topBarConfig(
+                    TopBarConfig(
+                        true,
+                        title = R.string.about_us_title,
+                        leadingIcon = R.drawable.arrow_back_icon,
+                        onLeadingClick = { navController.popBackStack() },
                     )
                 )
             }
@@ -411,6 +428,11 @@ fun NavHostScreen(
                 scaffoldPadding = scaffoldPadding,
                 targetUserId = targetUserId
             )
+        }
+        composable(Routes.ABOUT_US) {
+            Box(Modifier.padding(scaffoldPadding)) {
+                AboutUsScreen()
+            }
         }
     }
 }

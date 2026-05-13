@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -46,6 +47,21 @@ fun Indicator(isActive: Boolean, modifier: Modifier) {
     )
 }
 
+
+/**
+ * Componente TapGallery:
+ * Galería de imágenes interactiva estilo historias de Instagram.
+ *
+ * Utiliza Coil para encolar las imágenes y guardarlas en
+ * cache, evitando saltos visuales al cambiar de página.
+ *
+ * @param urls - Lista de direcciones de las imagenes a cargar.
+ * @param city - Texto con la ubicación que se muetsra en la parte inferior.
+ * @param modifier - Modificador para ajustar el tamaño de la galeria.
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TapGallery(
@@ -121,11 +137,12 @@ fun TapGallery(
             }
         }
 
-        FlowRow(
+        Row(
             Modifier
                 .align(Alignment.BottomStart)
-                .padding(dimensions.standard),
-            itemVerticalAlignment = Alignment.CenterVertically
+                .padding(dimensions.standard)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 painter = painterResource(R.drawable.location_icon),
@@ -137,7 +154,12 @@ fun TapGallery(
             Text(
                 text = city,
                 fontSize = 18.sp,
-                modifier = Modifier.padding(start = dimensions.standard)
+                color = Color.White,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .padding(start = dimensions.standard)
+                    .weight(1f)
             )
         }
 

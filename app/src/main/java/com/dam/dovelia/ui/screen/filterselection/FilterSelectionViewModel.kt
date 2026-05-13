@@ -12,6 +12,13 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * Clase FilterSelectionViewModel:
+ * Gestiona la lógica de los filtros de búsqueda para los alojamientos.
+
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @HiltViewModel
 class FilterSelectionViewModel @Inject constructor() : ViewModel() {
 
@@ -22,6 +29,12 @@ class FilterSelectionViewModel @Inject constructor() : ViewModel() {
         state = state.copy(citySearchQuery = newQuery)
     }
 
+    /**
+     * Función searchCities:
+     * Se conecta a la API de openmeteo para buscar ciudades que coincidanmcon el texto que el usaurio ha escrito
+     * en el campo de busqueda, pero solo realiza la peticion si se han escrito al menos dos caracteres para
+     * evitar sobrecargar el servidor con busquedas demasiado cortas.
+     */
     fun searchCities() {
         if (state.citySearchQuery.length < 2) return
 
@@ -37,6 +50,14 @@ class FilterSelectionViewModel @Inject constructor() : ViewModel() {
         }
     }
 
+    /**
+     * Función onCitySelected:
+     * Procesa la seleccion de una ciudad del listado de resultados.
+     * Construye el nombre completo de la ubicación (Ciudad, Region, Pais) para
+     * que el filtro sea lo mas preciso posible y el usuario vea donde busca.
+     *
+     * @param city - El objeto con los datos de la ciudad seleccionada.
+     */
     fun onCitySelected(city: CityResult) {
         state = if (city.id != -1) {
             val fullLocationName = listOfNotNull(
@@ -55,6 +76,7 @@ class FilterSelectionViewModel @Inject constructor() : ViewModel() {
         }
     }
 
+
     fun onCityChange(newVal: String) {
         state = state.copy(city = newVal)
     }
@@ -67,6 +89,13 @@ class FilterSelectionViewModel @Inject constructor() : ViewModel() {
         state = state.copy(bathrooms = newVal)
     }
 
+    /**
+     * Función onInitialTags:
+     * Se encarga de mapear las etiquetas recibidas (como Strings) al enumerado
+     * de AccommodationTag para que la pantalla muetsra los filtros activos.
+     *
+     * @param tagNames - Lista de nombres de las etiquetas a cargar.
+     */
     fun onInitialTags(tagNames: List<String>) {
         val tags = tagNames.mapNotNull { name ->
             runCatching { AccommodationTag.valueOf(name) }.getOrNull()

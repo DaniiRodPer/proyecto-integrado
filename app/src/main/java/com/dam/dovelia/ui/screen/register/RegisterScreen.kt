@@ -50,6 +50,18 @@ data class RegisterEvents(
     val onLogin: () -> Unit,
 )
 
+/**
+ * Función RegisterScreen:
+ * Se encarga de gestionar el primer paso del registro de usuarios.
+ * Inicializa el viewmodel y define los eventos necesarios para registrar los
+ * datos personales basicos antes de pasar a la configuración del perfil.
+ *
+ * @param onLogin - Evento para volver a la pantalla de inicio de sesión.
+ * @param onNextStep - Callback que envía los datos validados al siguiente paso.
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @Composable
 fun RegisterScreen(
     onLogin: () -> Unit,
@@ -76,6 +88,19 @@ fun RegisterScreen(
 
 }
 
+/**
+ * Función RegisterContent:
+ * Al igual que el login, utiliza un Box con imagen de fondo y un FloatingContainer para el formulario.
+
+ * Gestiona la validación de los campos mostrando errores si los datos
+ * introducidos no coinciden o no cumplen los requisitos.
+ *
+ * @param state
+ * @param events
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @Composable
 fun RegisterContent(
     state: RegisterState,

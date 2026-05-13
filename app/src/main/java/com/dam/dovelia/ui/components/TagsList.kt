@@ -93,7 +93,7 @@ fun TagList(
 
 @Preview
 @Composable
-fun AccommodationTagsGridPreview() {
+fun TagListPreview() {
     ProydrpTheme {
         Surface(
             color = MaterialTheme.colorScheme.surface

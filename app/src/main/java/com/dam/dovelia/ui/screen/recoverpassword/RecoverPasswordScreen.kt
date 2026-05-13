@@ -53,6 +53,17 @@ data class RecoverPasswordEvents(
     val onCancel: () -> Unit
 )
 
+/**
+ * Función RecoverPasswordScreen:
+ * Se encarga de coordinar el proceso de recuperación de contraseña de la app.
+ * Inicializa el viewmodel y define los eventos para solicitar el código de recuperación y para confirmar el cambio de la nueva passwod.
+ *
+ * @param onNavigateToLogin - evento para ir al login tras un cambio con éxito.
+ * @param onCancel - Evento para volver atrás.
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @Composable
 fun RecoverPasswordScreen(
     onNavigateToLogin: () -> Unit,
@@ -77,6 +88,19 @@ fun RecoverPasswordScreen(
 
 }
 
+/**
+ * Función RecoverPasswordContent:
+ * Dependiendo de si el email ya se ha enviado o no, muetsra unos campos u otros.
+ *
+ * * - Paso 1 -> Introducir el email para recibir el código de reseteo.
+ * * - Paso 2 -> Introducir código recibido y la nueva contraseña.
+ *
+ * @param state
+ * @param events
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @Composable
 fun RecoverPasswordContent(
     state: RecoverPasswordState,

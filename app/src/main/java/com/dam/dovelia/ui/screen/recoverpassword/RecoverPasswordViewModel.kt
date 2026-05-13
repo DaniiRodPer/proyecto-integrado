@@ -13,6 +13,18 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * Clase RecoverPasswordViewModel:
+ * Se encarga de gestionar la lógica para recuperar la cuenta del usaurio.
+ * Controla el envío del código de recuperación al correo y la validación
+ * de la nueva contraseña introducida.
+ *
+ * @property userRepository
+ * @property sessionManager
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @HiltViewModel
 class RecoverPasswordViewModel @Inject constructor(
     private val userRepository: UserRepository,
@@ -26,6 +38,9 @@ class RecoverPasswordViewModel @Inject constructor(
         state = state.copy(email = newVal, emailIsError = false, emailError = null)
     }
 
+    /**
+     * Solo permite introducir digitos y tiene un límite de 4 caracteres para coincidir con el PIN.
+     */
     fun onResetCodeChange(newVal: String) {
         if (newVal.length <= 4 && newVal.all { it.isDigit() }) {
             state = state.copy(resetCode = newVal, resetCodeIsError = false, resetCodeError = null)
@@ -37,6 +52,13 @@ class RecoverPasswordViewModel @Inject constructor(
             state.copy(newPassword = newVal, newPasswordIsError = false, newPasswordError = null)
     }
 
+    /**
+     * Función validateEmail:
+     * Utiliza una expresión regular para comprobar que el correo tiene un formato
+     * correcto antes de intentar realizar la peticion de recuperación.
+     *
+     * @return True si el email es valido, False si esta vacío o mal escrito.
+     */
     private fun validateEmail(): Boolean {
         val emailPattern = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[a-z]+$"
         val isEmailEmpty = state.email.isBlank()
@@ -53,6 +75,9 @@ class RecoverPasswordViewModel @Inject constructor(
         return !isEmailEmpty && isEmailValid
     }
 
+    /**
+     * Comprueba que el código de reset sea correcto y que la nueva contraseña cumpla con los requisitos minimos de seguridad.
+     */
     private fun validateResetFields(): Boolean {
         val passwordPattern = "^(?=.*[A-Z])(?=.*[0-9])(?=.*[@#$%^&+=!._-]).{12,}$"
 
@@ -78,6 +103,12 @@ class RecoverPasswordViewModel @Inject constructor(
         return !isPinEmpty && isPinValid && !isPasswordEmpty && isPasswordValid
     }
 
+
+    /**
+     * Función onSend:
+     * Manda la orden al servidor para enviar el correo de recuperación.
+     * Si la perición tiene éxito, cambia el contenido de la pantalla para mostrar los campos del código y la nueva contraseña.
+     */
     fun onSend() {
         if (!validateEmail()) return
 
@@ -101,6 +132,12 @@ class RecoverPasswordViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Función onConfirmChanges:
+     * Finaliza el proceso de recuperación enviando los nuevos datos al servidor. Si todo sale bien, navega al login
+     *
+     * @param onSuccess - evento para navegar al login tras confirmar el cambio.
+     */
     fun onConfirmChanges(onSuccess: () -> Unit) {
         if (!validateResetFields()) return
 

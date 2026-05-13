@@ -36,6 +36,7 @@ import com.dam.dovelia.ui.components.SwipeCard
 import com.dam.dovelia.ui.components.buttons.ReloadButton
 import kotlin.math.abs
 
+
 data class DiscoverEvents(
     val onSwipe: (Boolean) -> Unit,
     val onButtonPress: (Boolean) -> Unit,
@@ -43,6 +44,27 @@ data class DiscoverEvents(
     val onCardClick: (String) -> Unit
 )
 
+/**
+ * Función DiscoverScreen:
+ * Encargada de mandar orden al viewmodel para cargar perfiles de descubrimiento.
+ * Según el estado modificado, muetsra una interfaz u otra:
+ *
+ * * - Cargando -> Animación lottie de loading.
+ * * - Sin datos -> Aviso de fin de swipes y botón recarga.
+ * * - Éxito -> Contenido principal llamando a DiscoverContent.
+ *
+ * Vigila cambios en filtros para rfrescar la lista al instante.
+ *
+ * @param scaffoldPadding - Padding del scaffold de la app.
+ * @param onNavigateToProfile - Evento para ver perfil de alguien.
+ * @param filterCity - Ciudad para fultrar.
+ * @param filterRooms - Número habitaciones filtro.
+ * @param filterBathrooms - Baños filtro.
+ * @param filterTags - Etiquetas o caracteristicas buscadas.
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @Composable
 fun DiscoverScreen(
     scaffoldPadding: PaddingValues,
@@ -118,6 +140,23 @@ fun DiscoverScreen(
     }
 }
 
+/**
+ * Función DiscoverContent:
+ * Parte principal de pantalla descubrir, pinta el montón de tarjetas.
+ * Si detecta match con otro usuario, muestra animación de Match.
+ *
+ * Controla visualmente el monton para que la carta inferior sea algo mas pequeña
+ * y con menos opacidad hasta que la superior se desplaza.
+ *
+ * Si hay match, detiene flujo y enseña animación match con datos usuario.
+ *
+ * @param scaffoldPadding - Padding para evitar solapamientos.
+ * @param state - Estado éxito con lista cartas y datos.
+ * @param events - Eventos swipe, click y botones.
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @Composable
 fun DiscoverContent(
     scaffoldPadding: PaddingValues,

@@ -29,12 +29,11 @@ fun Modifier.swipeableCard(
     swipeThreshold: Float = 400f,
     triggerSwipeLeft: Boolean = false,
     triggerSwipeRight: Boolean = false,
-    enabled: Boolean = true // NUEVO: Para desactivar el toque en la tarjeta de abajo
+    enabled: Boolean = true
 ): Modifier {
     val offsetX = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
 
-    // 1. LA MAGIA: Asegurarnos de usar siempre la función más actual
     val currentOnSwipeProgress by rememberUpdatedState(onSwipeProgress)
     val currentOnSwipeLeft by rememberUpdatedState(onSwipeLeft)
     val currentOnSwipeRight by rememberUpdatedState(onSwipeRight)
@@ -48,7 +47,6 @@ fun Modifier.swipeableCard(
 
     LaunchedEffect(triggerSwipeLeft, triggerSwipeRight) {
         if (triggerSwipeLeft) {
-            // Objetivo más lejano (-1500f) para que no frene en pantalla
             offsetX.animateTo(-1500f, tween(300))
             currentOnSwipeLeft()
         } else if (triggerSwipeRight) {
@@ -60,8 +58,8 @@ fun Modifier.swipeableCard(
     }
 
     return this
-        .pointerInput(enabled) { // Pasamos enabled para que se actualice si cambia
-            if (!enabled) return@pointerInput // Si es la de abajo, ignoramos los toques
+        .pointerInput(enabled) {
+            if (!enabled) return@pointerInput
 
             detectDragGestures(
                 onDragEnd = {
@@ -88,7 +86,6 @@ fun Modifier.swipeableCard(
         .offset { IntOffset(offsetX.value.roundToInt(), 0) }
         .graphicsLayer {
             rotationZ = offsetX.value / 20
-            // 2. NUEVO EFECTO: La tarjeta se vuelve transparente conforme se aleja
             alpha = (1f - (abs(offsetX.value) / 1000f)).coerceIn(0f, 1f)
         }
 }

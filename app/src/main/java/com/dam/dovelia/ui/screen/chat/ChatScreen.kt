@@ -35,6 +35,24 @@ data class ChatEvents(
     val onSend: () -> Unit
 )
 
+/**
+ * Función ChatScreen:
+ * Se encarga de inicializar el chat con el usuario deestino y gestionar los
+ * estados de la pantalla segun la carga de mensajes y la conexión:
+ *
+ * * - Cargando -> Animación lottie de carga.
+ * * - Error o Sin datos -> Muestra aviso de error mediante una animación.
+ * * - Éxito -> Carga el contenido del chat llamando a ChatContent.
+ *
+ * Al salir de la pantalla se asegura de limpiar la sesión del chat para no
+ * dejar conexiones abiertas innecesariamente.
+ *
+ * @param scaffoldPadding - Padding del scaffold de la app.
+ * @param targetUserId - ID del usuario con el que estamos chateando.
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @Composable
 fun ChatScreen(
     scaffoldPadding: PaddingValues,
@@ -84,6 +102,22 @@ fun ChatScreen(
     }
 }
 
+
+/**
+ * Función ChatContent:
+ * Representa la interfaz del chat, mostrando el lsitado de mensajes y el
+ * campo de entrada de texto.
+ *
+ * Utiliza un LazyColumn con reverseLayout para que los mensajes nuevos
+ * aparezcan por la parte inferior y la lista se desplace sola.
+ *
+ * @param scaffoldPadding - Padding para no solapar con barras del sistema.
+ * @param state - Estado de éxito que contiene los mensajes y el texto actual.
+ * @param events - Eventos para cambiar texto y enviar mensajes.
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @Composable
 fun ChatContent(
     scaffoldPadding: PaddingValues,

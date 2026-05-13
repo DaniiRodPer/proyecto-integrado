@@ -22,6 +22,19 @@ import okhttp3.WebSocketListener
 import org.json.JSONObject
 import javax.inject.Inject
 
+
+/**
+ * Clase ChatViewModel:
+ * Se encarga de la lógica de la mensajería en tiempo real entre usuarios.
+ * Gestiona la carga del historial, el envío de nuevos mensajes y la
+ * sincronización mediante WebSockets a través del repositorio.
+ *
+ * @property repository
+ * @property sessionManager
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @HiltViewModel
 class ChatViewModel @Inject constructor(
     private val repository: UserRepository,
@@ -32,9 +45,17 @@ class ChatViewModel @Inject constructor(
         private set
 
     private var targetUserIdLocal: String = ""
-    private var webSocket: WebSocket? = null
-    private val client = OkHttpClient()
 
+    /**
+     * Función initChat:
+     * Inicializa la sesión de chat con un usuario específico. Recupera el
+     * historial de mensajes y configura la escucha de nuevos mensajes entrantes.
+     *
+     * Marca los mensajes como leídos al entrar y actualiza el estado de exito
+     * con la información del perifl del destinatario y los mensajes previos.
+     *
+     * @param targetUserId - Identificador del usuario con el que se abre chat.
+     */
     fun initChat(targetUserId: String) {
         if (targetUserIdLocal.isNotEmpty()) return
         targetUserIdLocal = targetUserId
@@ -79,33 +100,12 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    private fun connectWebSocket(myUserId: String) {
-        val request = Request.Builder().url("${BuildConfig.WS_URL}$myUserId").build()
-        val listener = object : WebSocketListener() {
-            override fun onMessage(webSocket: WebSocket, text: String) {
-                try {
-                    val json = JSONObject(text)
-                    if (json.getString("sender_id") == targetUserIdLocal) {
-                        val newMessage = Message(
-                            id = json.getInt("id"),
-                            sender_id = json.getString("sender_id"),
-                            receiver_id = json.getString("receiver_id"),
-                            text = json.getString("text"),
-                            timestamp = json.getString("timestamp")
-                        )
-                        val currentState = state as? ChatState.Success
-                        if (currentState != null) {
-                            state = currentState.copy(messages = currentState.messages + newMessage)
-                        }
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-        }
-        webSocket = client.newWebSocket(request, listener)
-    }
-
+    /**
+     * Función leaveChat:
+     * Notifica al repositorio que el usuario ha salido de la pantalla de chat.
+     * Esto sirve para que el sistema sepa que debe volver a mostrar notificaciones
+     * de mensajes entrantes en lugar de marcarlos como leidos directamente.
+     */
     fun leaveChat() {
         repository.currentChatUserId = null
     }
@@ -115,10 +115,32 @@ class ChatViewModel @Inject constructor(
         leaveChat()
     }
 
+    /**
+     * Función onMessageChange:
+     * Actualiza el texto del campo de entrada segun el usuario escribe.
+     * Aplica una restriccion de 500 caracteres para evitar mensajes demasiado
+     * largos que puedan dar problemas en el servidor.
+     *
+     * @param text
+     */
     fun onMessageChange(text: String) {
-        (state as? ChatState.Success)?.let { state = it.copy(inputText = text) }
+        (state as? ChatState.Success)?.let { state =
+            if (it.inputText.length < 500){
+                it.copy(inputText = text)
+            } else {
+                it
+            }
+        }
     }
 
+    /**
+     * Función sendMessage:
+     * Procesa el envío del mensaje actual al servidor. Limpia el campo de
+     * entrada inmediatamente para dar sensación de fluidez y añade el nuevo
+     * mensaje al listado de la pantalla si la perición tiene éxito.
+     *
+     * Valida que el texto no esté vacio antes de intentar realizar el envío.
+     */
     fun sendMessage() {
         val currentState = state as? ChatState.Success ?: return
         val textToSend = currentState.inputText

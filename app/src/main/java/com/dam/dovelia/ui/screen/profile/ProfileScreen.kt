@@ -52,6 +52,23 @@ data class ProfileEvents(
     val on: () -> Unit
 )
 
+/**
+ * Función composable ProfileScreen:
+ * Se encarga de cargar la información del perfil, ya sea el del propio usuario
+ * logueado o de otro usuario de la plataforma.
+ * Gestiona los permisos de notificaciones al entrar y controla los estados
+ *
+ * de la pantalla segun la respuesta del servidor:
+ * * - Cargando -> Animación de carga con lottie.
+ * * - Sin datos -> Pantalla de error si no se puede obtener el perifl.
+ * * - Éxito -> Muestra el detalle completo en ProfileContent.
+ *
+ * @param scaffoldPadding - Padding para no solapar con la navegación.
+ * @param targetUserId - ID del usuario a consultar (null para el perfil propio).
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @Composable
 fun ProfileScreen(
     scaffoldPadding: PaddingValues,
@@ -99,6 +116,24 @@ fun ProfileScreen(
     }
 }
 
+/**
+ * Función ProfileContent:
+ * Muestra toda la información visual del perfil, incluyendo la foto,
+ * descripción personal, etiquetas de usuario y datos del alojamiento.
+ *
+ * Utiliza un verticalScroll para que los detalles de la casa y la galería
+ * de fotos se puedan consultar comodamente en pantallas pequeñas.
+ *
+ * Tambien formatea las etiquetas de usuario en un solo String separado por
+ * comas para que la visualización sea mas límpia.
+ *
+ * @param scaffoldPadding
+ * @param user
+ * @param events
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @Composable
 fun ProfileContent(
     scaffoldPadding: PaddingValues,

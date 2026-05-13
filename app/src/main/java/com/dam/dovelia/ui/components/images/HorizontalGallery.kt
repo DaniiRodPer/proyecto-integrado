@@ -25,6 +25,20 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.dam.dovelia.ui.utils.toFullImageUrl
 
+/**
+ * Componente HorizontalGallery:
+ * Muestra un carrusel de imágenes con desplazamiento horizontal y efecto, calcula el espaciado necesario para que
+ * una imagen quede siempre alineada al centro.
+ *
+ * Implementa una precarga de todas las fotos en la cache de Coil para que el desplazamiento entre páginas sea instantaneo.
+ *
+ * @param urls - Lista de rutas de las imagenes que se van a mostrar.
+ * @param height - Altura fija de la galería.
+ * @param modifier
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @Composable
 fun HorizontalGallery(
     urls: List<String>,

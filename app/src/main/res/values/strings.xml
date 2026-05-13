@@ -133,4 +133,13 @@
     <string name="new_message">Nuevo mensaje</string>
     <string name="new_message_desc">Alguien te habla</string>
     <string name="clear_filters">Borrar filtros</string>
+    <string name="abus_title">Información del desarrollador</string>
+    <string name="abus_desc">Somos una plataforma de intercambio de viviendas, con la filosofía de defender un intercambio puro y sin restricciones que permite vivir experiencias sin los límites del alojamiento.</string>
+    <string name="abus_links_title">Enlaces de interés</string>
+    <string name="app_desc">Tu app de intercambio de casas</string>
+    <string name="about_us_title">Sobre nosotros</string>
+    <string name="abus_proy_info">(Proyecto Intermodular)</string>
+    <string name="terms_title">Términos y Condiciones</string>
+    <string name="terms_body">Para utilizar Dovelia y asegurar una comunidad basada en el respeto, debes aceptar nuestros Términos de Uso y Políticas de Privacidad.</string>
+    <string name="reject">Rechazar</string>
 </resources>

@@ -13,6 +13,17 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * Clase RegisterViewModel:
+ * Gestiona la lógica del primer paso del registro de usuarios.
+ * Se encarga de validar los datos personales y de comprobar con el servidor
+ * si el correo electronico ya está en uso antes de permitir avanzar.
+ *
+ * @property userRepository
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @HiltViewModel
 class RegisterViewModel @Inject constructor(
     private val userRepository: UserRepository
@@ -20,6 +31,14 @@ class RegisterViewModel @Inject constructor(
     var state by mutableStateOf(RegisterState())
         private set
 
+    /**
+     * Función onRegister:
+     * Ejecuta el proceso de validación y registro inicial. Comprueba que el email esté libre y crea un objeto de perfil parcial con la contraseña.
+     *
+     * Si el servidor confirma que el correo es válido, navega a la siguiente pantalla, de lo contrario, muetsra un error.
+     *
+     * @param onSuccess - evento para navegar al segundo paso del registro.
+     */
     fun onRegister(onSuccess: (UserProfile) -> Unit) {
         viewModelScope.launch {
             val localValid = validateFields()
@@ -38,6 +57,9 @@ class RegisterViewModel @Inject constructor(
                             password = state.password
                         }
                         onSuccess(partialUser)
+                        state = state.copy(
+                            isLoading = false
+                        )
                     } else {
                         state = state.copy(
                             emailIsError = true,
@@ -58,6 +80,15 @@ class RegisterViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Función validateFields:
+     * Realiza una comprobación de todos los campos del formulario.
+     *
+     * También controla que el nombre y los apellidos no superen el límite de
+     * caracteres permitido por la base de datos para evitar erores al guardar.
+     *
+     * @return True si todos los datos cumplen con las reglas de negocio.
+     */
     private fun validateFields(): Boolean {
         val emailPattern = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[a-z]+$"
         val passwordPattern = "^(?=.*[A-Z])(?=.*[0-9])(?=.*[@#$%^&+=!._-]).{12,}$"

@@ -15,6 +15,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
+/**
+ * Clase DiscoverViewModel:
+ * Se encarga de gestionar la lógica de descubrimiento de usuarios.
+ * Controla la carga de perfiles, aplicación de filtros y las interacciones de swipe.
+ *
+ * @property userRepository - Repositorio para peticiones de red y gestión de usuarios.
+ * @property sessionManager - Gestor de sesión para obtener el token de autenticación.
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @HiltViewModel
 class DiscoverViewModel @Inject constructor(
     private val userRepository: UserRepository,
@@ -30,6 +41,17 @@ class DiscoverViewModel @Inject constructor(
     private var currentBathrooms: Int? = null
     private var currentTags: List<String>? = null
 
+    /**
+     * Función verifySessionAndLoad:
+     * Comprueba si la sesión es válida y si los filtros han cambiado antes de cargar.
+     * Evita peticiones innecesarias si los datos de busqueda son los mismos que antes.
+     *
+     * @param city - Ciudad para filtrar resultados.
+     * @param rooms - Número de habitaciones deseadas.
+     * @param bathrooms - Número de baños deseados.
+     * @param tags - Lista de etiquetas
+     * @param forceRefresh - Obliga a recargar los datos aunque no cambien filtros.
+     */
     fun verifySessionAndLoad(
         city: String?,
         rooms: Int?,
@@ -56,6 +78,17 @@ class DiscoverViewModel @Inject constructor(
         }
     }
 
+
+    /**
+     * Función loadUsers:
+     * Realiza la petición al repositorio para obtener nuevos perfiles de usuario.
+     * Gestiona los estados de carga, éxito y falta de datos según la respuesta de la API.
+     *
+     * @param city - Ciudad para el filtrado.
+     * @param rooms - Habitaciones mínimas.
+     * @param bathrooms - Baños mínimos.
+     * @param tags - Etiquetas de configuración.
+     */
     fun loadUsers(city: String? = null, rooms: Int? = null, bathrooms: Int? = null, tags: List<String>? = null) {
         viewModelScope.launch {
             state = DiscoverState.Loading
@@ -90,6 +123,13 @@ class DiscoverViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Función onButtonPressed:
+     * Gestiona la pulsación de los botones de Like o Dislike de la interfaz.
+     * Activa los triggers de animación para simular el deslizamiento de la tajreta.
+     *
+     * @param isLike - Define si la acción es un like o un dislike.
+     */
     fun onButtonPressed(isLike: Boolean) {
         val currentState = state
         if (currentState is DiscoverState.Success && !currentState.isSwipeLoading) {
@@ -103,6 +143,17 @@ class DiscoverViewModel @Inject constructor(
         }
     }
 
+
+    /**
+     * Función onSwipe:
+     * Procesa la acción de deslizado y actualiza la lista de cartas restantes.
+     * Envia la interacción al servidor y gestiona la lógica de match si este ocurre.
+     *
+     * Muestra una animación de match durante unos segundos si la respuesta es positiva
+     * y luego rfresca el estado para seguir descubriendo gente.
+     *
+     * @param isLike - Indica la dirección del swipe realizado por el usuario.
+     */
     fun onSwipe(isLike: Boolean) {
         val currentState = state as? DiscoverState.Success ?: return
         val swipedUser = currentState.currentCard ?: return

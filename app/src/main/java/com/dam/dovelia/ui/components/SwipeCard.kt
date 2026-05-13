@@ -61,6 +61,24 @@ import com.dam.dovelia.ui.utils.getUserTagLabel
 import com.dam.dovelia.ui.utils.swipeableCard
 import kotlin.math.abs
 
+/**
+ * Componente SwipeCard:
+ * Es la tarjeta interactiva que contiene la información del alojamiento y del usuario.
+ *
+ * Implementa una lógica de gestos para decidir si hay interés o no, además cambia de de color y opacidad egún el progreso del arrastre.
+ *
+ * Tambien adapta el tamaño de la galería y la cantidad de texto de forma automática dependiendo de la altura de la pantalla y del escalado del
+ * del sistema para intentar que no se rompa el diseño.
+ *
+ * @param userProfile - Datos completos del perfil a muetsrar.
+ * @param onSwipe - Evento que devuelve True para Like y False para Dislike.
+ * @param onCardClick - Evento para abrir el detalle completo del perfil.
+ * @param onButtonPress - Acción manual de los botones inferiores.
+ * @param isTopCard - Para solo permitir la interacción si la tarjeta está la primera.
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @Composable
 fun SwipeCard(
     userProfile: UserProfile,

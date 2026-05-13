@@ -28,6 +28,20 @@ import com.dam.dovelia.R
 import com.dam.dovelia.ui.common.LocalDimensions
 import com.dam.dovelia.ui.theme.ProydrpTheme
 
+/**
+ * Componente HorizontalPhotoSelector:
+ * Permite gestionar la galería de fotos mediante un listado horizontal con scroll.
+ *
+ * Tiene un botón para añadir nuevas imagenes siempre si no se ha superado el límite de imágenes del indicador
+ *
+ * @param items - Lista de fotos (URLs o archivos locales).
+ * @param onAddPhotoClick - Evento para abrir el selector de archivos del sistema.
+ * @param onDeletePhotoClick - Evento para elminar una foto específica de la lista.
+ * @param maxPhotos - Cantidad máxima de imagenes permitidas.
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @Composable
 fun HorizontalPhotoSelector(
     items: List<Any>,

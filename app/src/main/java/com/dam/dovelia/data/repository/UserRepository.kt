@@ -34,6 +34,17 @@ import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Clase UserRepository:
+ * Gestiona las peticiones REST y la conexión por WebSockets para la mensajería en tiempo real y las notificaciones.
+ *
+ * @property apiService - Interfaz de Retrofit para llamadas a la API.
+ * @property sessionManager - Gestor de tokens y datos locales de sesión.
+ * @property notificationHandler - Utilidad para lanzar notificaciones al sistema.
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @Singleton
 class UserRepository @Inject constructor(
     private val apiService: ApiService,
@@ -54,8 +65,21 @@ class UserRepository @Inject constructor(
 
     var currentChatUserId: String? = null
 
+    /**
+     * Función initGlobalWebSocket:
+     * Inicializa el túnel de comunicación en tiempo real. Escucha mensajes y
+     * eventos de match entrantes para actualizar la UI y lanzar notificaciones.
+     *
+     * Si el tipo de evento es un match, incrementa el contador de no leidos
+     * y muestra un aviso al usaurio para que sepa que tiene una nueva notificación.
+     * *Si es un mensaje y el usuario no está en ese chat, tambien avisa.
+     *
+     * @param myUserId - ID del usuario actual para identificarse en el socket.
+     */
     fun initGlobalWebSocket(myUserId: String) {
-        if (webSocket != null) return
+        if (webSocket != null) {
+            closeWebSocket()
+        }
 
         val request = Request.Builder().url("${BuildConfig.WS_URL}$myUserId").build()
         val listener = object : WebSocketListener() {
@@ -99,11 +123,38 @@ class UserRepository @Inject constructor(
         webSocket = client.newWebSocket(request, listener)
     }
 
-    fun closeWebSocket() {
-        webSocket?.close(1000, "App closed")
-        webSocket = null
+    /**
+     * Función isWebSocketOpen:
+     * Comprueba si existe una conexión activa con el servidor.
+     * Sirve para evitar intentar abrir varios sockets a la vez.
+     *
+     * @return True si el socket está inicializado, False en caso contrario.
+     */
+    fun isWebSocketOpen(): Boolean {
+        return webSocket != null
     }
 
+    /**
+     * Función closeWebSocket:
+     * Cierra la conexión actual del socket de forma segura enviando un código
+     * de cierre estándar. Tambien limpia la lista de usuarios no leidos.
+     */
+    fun closeWebSocket() {
+        webSocket?.close(1000, "User logged out / App closed")
+        webSocket = null
+        _unreadUsers.value = emptySet()
+    }
+
+    /**
+     * Función markAsRead:
+     * Notifica al servidor que los mensajes de un usuario específico han sido
+     * visualizados para limpiar el contador de notificaciones pendientes.
+     *
+     * Actualiza el estado local de _unreadUsers para quitar el punto rojo de
+     * la interfaz inmediatamente sin esperar a la perición de red.
+     *
+     * @param senderId - ID del usuario cuyos mensajes se maran como leidos.
+     */
     suspend fun markAsRead(senderId: String) {
         val token = sessionManager.getAuthToken() ?: return
 
@@ -116,6 +167,13 @@ class UserRepository @Inject constructor(
         }
     }
 
+    /**
+     * Función login:
+     * Realiza la petición de acceso al servidor enviando las credenciales.
+     * Si los datos son correctos, devuelve el token de sesion necesario para  el resto de peticiones de la app.
+     *
+     * @param request - Objeto con el email y la passwod del usuario.
+     */
     suspend fun login(request: LoginRequest): BaseResult<TokenResponse> {
         return try {
             val response = apiService.loginUser(request)
@@ -129,6 +187,12 @@ class UserRepository @Inject constructor(
         }
     }
 
+    /**
+     * Función register:
+     * Registra un nuevo perfil de usuario en la base de datos del servdor enviando toda la información del formulario incluyendo datos de la casa
+     *
+     * @param user - Objeto UserProfile con toda la info del nuevo usuario.
+     */
     suspend fun register(user: UserProfile): BaseResult<TokenResponse> {
         return try {
             val response = apiService.registerUser(user)
@@ -142,6 +206,12 @@ class UserRepository @Inject constructor(
         }
     }
 
+    /**
+     * Función loginWithGoogle:
+     * Gestiona el inicio de sesión mediante el token de identidad de Google Permite un acceso rapido sin necesidad de contraseña manual.
+     *
+     * @param idToken - Token devuelto por el proeedor de Google.
+     */
     suspend fun loginWithGoogle(idToken: String): BaseResult<GoogleAuthResponse> {
         return try {
             val response = apiService.googleLogin(mapOf("token" to idToken))
@@ -155,6 +225,15 @@ class UserRepository @Inject constructor(
         }
     }
 
+    /**
+     * Función getUserProfile:
+     * Obtiene la información detallada de cualquier usuario de la red.
+     * Intenta realizar la petición con el token de sesion y devuelve el objeto
+     * con los datos del perfil y su alojamiento asociado.
+     *
+     * @param token - Token de acceso del usuario logueado.
+     * @param userId - Identificador del perfil que queremos consultar.
+     */
     suspend fun getUserProfile(token: String, userId: String): BaseResult<UserProfile> {
         return try {
             val response = apiService.getUserProfile("Bearer $token", userId)
@@ -176,6 +255,10 @@ class UserRepository @Inject constructor(
         }
     }
 
+    /**
+     * Función getMyUser:
+     * Recupera el perfil completo del usuario que tiene la sesion iniciada utilizando el token guardado en el gestor de sesiónç
+     */
     suspend fun getMyUser(): BaseResult<UserProfile> {
         val token =
             sessionManager.getAuthToken() ?: return BaseResult.Error(Exception("Sesión expirada"))
@@ -192,6 +275,13 @@ class UserRepository @Inject constructor(
         }
     }
 
+    /**
+     * Función updateUser:
+     * Envía los datos actualizados del perfil al servidor para sobreescribir la información antigua del usuario y su alojamiento.
+     *
+     * @param userId - Identificador único del usuario a modificar.
+     * @param user - Objeto con los nuevos datos a persistir.
+     */
     suspend fun updateUser(userId: String, user: UserProfile): BaseResult<UserProfile> {
         val token =
             sessionManager.getAuthToken() ?: return BaseResult.Error(Exception("Sesión expirada"))
@@ -207,6 +297,13 @@ class UserRepository @Inject constructor(
         }
     }
 
+    /**
+     * Función isEmailAvailable:
+     * Comprueba si un correo electronico ya está registrado en el sistema.
+     * Se usa durante el registro para evitar duplicados.
+     *
+     * @param email - La dirección de correo que queremos verificar.
+     */
     suspend fun isEmailAvailable(email: String): BaseResult<Boolean> {
         return try {
             val response = apiService.checkEmail(email)
@@ -221,6 +318,15 @@ class UserRepository @Inject constructor(
         }
     }
 
+    /**
+     * Función uploadImage:
+     * Gestiona la subida de archivos al servidor de imagenes.
+     * Convierte el archivo File en un cuerpo Multipart para que la API pueda
+     * procesar la imagen y guardarla en el almacenamiento en la nube.
+     *
+     * @param file - Archivo de imagen seleccionado de la galeria o cámara.
+     * @return La URL de la imagen subida si todo sale bien.
+     */
     suspend fun uploadImage(file: File): BaseResult<String> {
         return try {
             val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
@@ -251,6 +357,10 @@ class UserRepository @Inject constructor(
         }
     }
 
+    /**
+     * Función getDiscoverUsers:
+     * Pide el listado de perfiles para la pantalla de descubrimiento aplicando los fultros de ciudad, habitaciones o etiquetas si existen.
+     */
     suspend fun getDiscoverUsers(
         token: String,
         city: String? = null,
@@ -267,6 +377,15 @@ class UserRepository @Inject constructor(
         }
     }
 
+    /**
+     * Función swipeUser:
+     * Registra la interacción de Like o Dislike entre el usuario actual y otro.
+     * Envía la decisión al servidor y devuelve si ha habido un match mutuo.
+     *
+     * @param token - Token de autenticación.
+     * @param swipedId - ID del usuario sobre el que se realiza la acción.
+     * @param isLike - Booleano que indica si es un like o un descarte.
+     */
     suspend fun swipeUser(token: String, swipedId: String, isLike: Boolean): BaseResult<SwipeResponse> {
         return try {
             val bearerToken = "Bearer $token"
@@ -277,6 +396,10 @@ class UserRepository @Inject constructor(
         }
     }
 
+    /**
+     * Función getMatches:
+     * Obtiene todos los perfiles de usuarios con los que existe un match mutuo
+     */
     suspend fun getMatches(token: String): BaseResult<List<UserProfile>> {
         return try {
             val bearerToken = "Bearer $token"
@@ -292,7 +415,10 @@ class UserRepository @Inject constructor(
         }
     }
 
-
+    /**
+     * Función getChatMessages:
+     * Recupera el historial de mensajes intercambiados con un usuario concreto
+     */
     suspend fun getChatMessages(token: String, otherUserId: String): BaseResult<List<Message>> {
         return try {
             val response = apiService.getMessages("Bearer $token", otherUserId)
@@ -303,6 +429,10 @@ class UserRepository @Inject constructor(
         }
     }
 
+    /**
+     * Función sendMessage:
+     * Realiza el envío de un nuevo mensaje de texto a otro usaurio medianteuna petición POST estándar.
+     */
     suspend fun sendMessage(token: String, messageCreate: MessageCreate): BaseResult<Message> {
         return try {
             val response = apiService.sendMessage("Bearer $token", messageCreate)
@@ -313,6 +443,12 @@ class UserRepository @Inject constructor(
         }
     }
 
+    /**
+     * Función requestRecoveryPin:
+     * Solicita el envío de un código de seguridad al correo electronico del usuario para iniciar el proceso de cambio de contraseña.
+     *
+     * @param email - Dirección de correo donde se enviará el PIN.
+     */
     suspend fun requestRecoveryPin(email: String): BaseResult<Boolean> {
         return try {
             val response = apiService.requestRecoveryPin(mapOf("email" to email))
@@ -323,6 +459,10 @@ class UserRepository @Inject constructor(
         }
     }
 
+    /**
+     * Función resetPassword:
+     * Finaliza el proceso de recuperación de cuenta estableciendo una nueva contraseña tras verificar que el PIN es correcto.
+     */
     suspend fun resetPassword(email: String, pin: String, newPass: String): BaseResult<Boolean> {
         return try {
             val response = apiService.resetPassword(
@@ -335,6 +475,10 @@ class UserRepository @Inject constructor(
         }
     }
 
+    /**
+     * Función syncUnreadStatus:
+     * Sincroniza el listado de usuarios que nos han enviado mensajes mientras la aplicación estaba carrada
+     */
     suspend fun syncUnreadStatus() {
         val token = sessionManager.getAuthToken() ?: return
         try {
@@ -348,6 +492,3 @@ class UserRepository @Inject constructor(
         }
     }
 }
-
-
-

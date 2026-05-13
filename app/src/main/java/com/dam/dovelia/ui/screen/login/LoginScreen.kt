@@ -50,6 +50,24 @@ data class LoginEvents(
     val onForgotPassword: () -> Unit
 )
 
+
+/**
+ * Función LoginScreen:
+ * Se encarga de gestionar la pantalla de acceso a la aplicación. Inicializa el
+ * viewmodel y define los eventos necesarios para el inicio de sesion normal y
+ * mediante la cuenta de Google.
+ *
+ * Tambien redirige al usuario a la pantalla de registro o de recuperación de
+ * contraseña según la opción que elija.
+ *
+ * @param onRegister - Evento para navegar a la pantalla de registro inicial.
+ * @param onLogin - función que se ejecuta cuando el login es correcto.
+ * @param onNavigateToRegisterStep2 - Redirige a nuevos usuarios de Google al registro.
+ * @param onForgotPassword - Evento para ir a la sección de recuperar contraseña.
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @Composable
 fun LoginScreen(
     onRegister: () -> Unit,
@@ -84,6 +102,18 @@ fun LoginScreen(
 
 }
 
+/**
+ * Función LoginContent:
+ * Contiene toda la interfaz visual de la pantalla de login.
+ * Permite introducir el email y la passwod, gestionando los errores de
+ * credenciales si el servidor devuelve un fallo.
+ *
+ * @param state
+ * @param events
+ *
+ * @author Daniel Rodríguez Pérez
+ * @version 1.0
+ */
 @Composable
 fun LoginContent(
     state: LoginState,
